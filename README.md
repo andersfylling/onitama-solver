@@ -1,2 +1,2 @@
 # onitama-solver
-Golang solver for the chinese board game Onitama
+Golang solver for the board game Onitama
