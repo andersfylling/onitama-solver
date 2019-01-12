@@ -6,9 +6,10 @@ import (
 )
 
 const NrOfActiveCards = 5
+const NrOfPlayerCards = 2
 
 // //go:generate stringer -type=Card
-type Card = uint64
+type Card = Board
 
 const (
 	// Tiger card
@@ -149,9 +150,9 @@ func DrawCards() (selection []Card) {
 	}
 
 	for {
-pick:
+	pick:
 		rand.Seed(time.Now().UnixNano())
-		card := cards[rand.Int() % len(cards)]
+		card := cards[rand.Int()%len(cards)]
 
 		// check if it already exists
 		for i := range selection {

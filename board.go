@@ -1,6 +1,6 @@
 package onitamago
 
-// Board type
+// Board type is based off on bitboards. But uses a mask to identify the 5x5 board
 //  63	62	61	60	59	58	57	56
 //  55	54	53	52	51	50	49	48
 //  47	46	45	44	43	42	41	40
@@ -38,3 +38,35 @@ const (
 	//  _	_	_	_	_	_	_	_
 	CardOffset Board = 0x2a
 )
+
+// FlipVertical Flip a bitboard vertically
+func FlipVertical(i Board) Board {
+	k1 := Board(0x00FF00FF00FF00FF)
+	k2 := Board(0x0000FFFF0000FFFF)
+	i = ((i >> 8) & k1) | ((i & k1) << 8)
+	i = ((i >> 16) & k2) | ((i & k2) << 16)
+	i = (i >> 32) | (i << 32)
+	return i
+}
+
+// FlipHorizontal Flip a bitboard horizontally
+func FlipHorizontal(i Board) Board {
+	k1 := Board(0x5555555555555555)
+	k2 := Board(0x3333333333333333)
+	k4 := Board(0x0f0f0f0f0f0f0f0f)
+	i = ((i >> 1) & k1) + 2*(i&k1)
+	i = ((i >> 2) & k2) + 4*(i&k2)
+	i = ((i >> 4) & k4) + 16*(i&k4)
+	return i
+}
+
+func RotateBoard(b Board) Board {
+	b = FlipVertical(b)
+	b = FlipHorizontal(b)
+
+	// move it to match the BoardMask
+	b = b >> 8 // one row down
+	b = b << 1 // one column left
+
+	return b
+}
