@@ -29,7 +29,7 @@ const (
 	// BoardMaskOffset ...
 	BoardMaskOffset BoardIndex = 0x9
 
-	TempleTop Board = 0x80000000000
+	TempleTop    Board = 0x80000000000
 	TempleBottom Board = 0x800
 )
 

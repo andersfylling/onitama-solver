@@ -3,13 +3,12 @@ package onitamago
 import "math/bits"
 
 const (
-	NrOfPieceTypes Amount = 2
+	NrOfPieceTypes   Amount = 3 // student, master, temple. temples cannot move
 	NrOfPlayerPieces Amount = 5
 
 	StudentsIndex Index = 0
-	MasterIndex Index = 1
+	MasterIndex   Index = 1
 )
-
 
 // LSB Least Significant Bit
 func LSB(x Board) BoardIndex {

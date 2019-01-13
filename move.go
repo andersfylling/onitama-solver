@@ -1,58 +1,86 @@
 package onitamago
 
 type Move = uint16
+type MoveAction = Board
 
 const MovePositionMask Move = 0x3f
 const MoveMaskTo Move = MovePositionMask << 0
 const MoveMaskFrom Move = MovePositionMask << 6
-const MoveMaskWin Move = 0x1 << 12
-const MoveMaskAttack Move = 0x2 << 13
+const MoveMaskAction Move = 0x7 << 12
 const MoveMaskCardIndex Move = 0x1 << 15
-// 0 bits left
+
+// resetMove always call this before starting to write content to a move
+func resetMove(m Move) Move {
+	return 0
+}
 
 func setMoveTo(m Move, pos BoardIndex) Move {
-	return ((m | MoveMaskTo) ^ MoveMaskTo) | Move(pos)
+	return m | Move(pos)
+}
+
+func getMoveTo(m Move) BoardIndex {
+	return BoardIndex(m & MoveMaskTo)
 }
 
 func setMoveFrom(m Move, pos BoardIndex) Move {
-	return ((m | MoveMaskFrom) ^ MoveMaskFrom) | Move(pos << 6)
+	return m | Move(pos<<6)
 }
 
-func setMoveWin(m Move, hit Board) Move {
-	return unsetMoveWin(m) | Move(hit << 12)
+func getMoveFrom(m Move) BoardIndex {
+	return BoardIndex((m & MoveMaskFrom) >> 6)
 }
 
-func unsetMoveWin(m Move) Move {
-	return (m | MoveMaskWin) ^ MoveMaskWin
+func setMoveAction(m Move, action MoveAction) Move {
+	action = 0x7 & action
+	action = action << 12
+	return m | Move(action)
 }
 
-func setMoveAttack(m Move, pos BoardIndex) Move {
-	return ((m | MoveMaskAttack) ^ MoveMaskAttack) | Move(pos << 13)
+func getMoveWin(m Move) Index {
+	return Index(getMoveAction(m) & 0x1)
 }
 
-func setCardIndex(m Move, index BoardIndex) Move {
-	return ((m | MoveMaskAttack) ^ MoveMaskAttack) | Move(index << 15)
+func getMoveFriendlyBoardIndex(m Move) Index {
+	action := getMoveAction(m)
+	return Index((action & 0x2) >> 0x1)
+}
+
+func getMoveHostileBoardIndex(m Move) Index {
+	action := getMoveAction(m)
+	master := action & 0x1
+	temple := action & 0x4
+	return Index((temple >> 1) | (((temple >> 2) | master) ^ (temple >> 2)))
+}
+
+func getMoveAction(m Move) Move {
+	return (m & MoveMaskAction) >> 12
+}
+
+func setMoveCardIndex(m Move, index BoardIndex) Move {
+	return m | Move(index<<15)
 }
 
 func getMoveCardIndex(m Move) BoardIndex {
-	return BoardIndex(m & MoveMaskAttack) >> 15
+	return BoardIndex(m&MoveMaskCardIndex) >> 15
 }
 
-func encodeMove(fromIndex, toIndex, cardIndex BoardIndex, opponents, friends Board, temple Board) (move Move) {
+func encodeMove(st *State, fromIndex, toIndex, cardIndex BoardIndex) (move Move) {
+	move = resetMove(move) // in case code gets change, and re-used populated bits later on
 	move = setMoveFrom(move, fromIndex)
 	move = setMoveTo(move, toIndex)
 
-	to := boardIndexToBoard(toIndex)
-	attack := to & opponents
-	attackIndex := LSB(attack)
-	move = setMoveAttack(move, attackIndex)
-	// TODO: check if a master is killed, cause that's a win
+	// mark the win bit if the temple or a master is taken
+	win := st.temples[st.otherPlayer] >> toIndex
+	win |= st.board[st.otherPlayer*NrOfPieceTypes+MasterIndex] >> toIndex
+	win &= 0x1
 
-	templeHit := temple & to
-	move = setMoveWin(move, templeHit >> 11)
-	move = setMoveWin(move, templeHit >> 43)
+	pieceType := st.board[st.otherPlayer*NrOfPieceTypes+MasterIndex] >> fromIndex
+	pieceType &= 0x1 // redundant
 
-	move = setCardIndex(move, cardIndex)
+	action := (0x4 & (st.temples[st.otherPlayer] >> (toIndex + 2))) | (pieceType << 1) | win
+	move = setMoveAction(move, action)
+
+	move = setMoveCardIndex(move, cardIndex)
 
 	return move
 }
