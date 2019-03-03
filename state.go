@@ -1,5 +1,11 @@
 package onitamago
 
+import (
+	"fmt"
+	"strconv"
+	"strings"
+)
+
 const (
 	BrownPlayer Index = iota
 	BluePlayer
@@ -45,6 +51,115 @@ type State struct {
 	currentDepth  Index
 }
 
+var _ fmt.Stringer = (*State)(nil)
+
+func (st *State) String() string {
+	// white = who ever moves first
+	// this can be determined using State.currentDepth
+	const blueStudent = '♟'
+	const blueMaster = '♚'
+	const blueTemple = '⚑'
+	const brownStudent = '♙'
+	const brownMaster = '♔'
+	const brownTemple = '⚐'
+	const empty = '-'
+
+	//piece := func(master bool) rune {
+	//	if st.currentDepth % 2 == 0 {
+	//		if master {
+	//			return blueMaster
+	//		}
+	//		return blueStudent
+	//	}
+	//	if master {
+	//		return brownMaster
+	//	}
+	//	return brownStudent
+	//}
+	//temple := func(white bool) string {
+	//	if white {
+	//		return blueTemple
+	//	}
+	//	return brownTemple
+	//}
+
+	// create a 5x5 board representation
+	board := CreateRunes(empty, 25)
+
+	blueIndex := BluePlayer*NrOfPieceTypes
+	brownIndex := BrownPlayer*NrOfPieceTypes
+	blueTempleIndex := 24 - 2 // reversed
+	brownTempleIndex := 24 - 22 // reversed
+	bluePieces := Merge(st.board[blueIndex:blueIndex+NrOfPieceTypes-1])
+	brownPieces := Merge(st.board[brownIndex:brownIndex+NrOfPieceTypes-1])
+
+	for i := LSB(bluePieces); i != 64; i = NLSB(&bluePieces, i) {
+		index := bitboardIndexToOnitamaIndex(i)
+		// reverse it, since string and LSB starts at different ends
+		index = 24 - index
+
+		if pieceAtBoardIndex(st.board[blueIndex+MasterIndex], i) {
+			board[index] = blueMaster
+			if index != 24 - 2 {
+				board[24 - 2] = blueTemple
+			}
+		} else {
+			board[index] = blueStudent
+		}
+	}
+	if board[blueTempleIndex] == empty {
+		board[blueTempleIndex] = blueTemple
+	}
+
+	for i := LSB(brownPieces); i != 64; i = NLSB(&brownPieces, i) {
+		index := bitboardIndexToOnitamaIndex(i)
+		// reverse it, since string and LSB starts at different ends
+		index = 24 - index
+
+		if pieceAtBoardIndex(st.board[brownIndex+MasterIndex], i) {
+			board[index] = brownMaster
+		} else {
+			board[index] = brownStudent
+		}
+	}
+	if board[brownTempleIndex] == empty {
+		board[brownTempleIndex] = brownTemple
+	}
+
+	// add new lines, spacing, rows and col identifiers
+	// and the idle card
+	var indexed string = "\n"
+	rows := []int64{5,4,3,2,1}
+	for i := range rows {
+		tmp := strconv.FormatInt(rows[i], 10) + string(board[5*i:5*i+5])
+		split := strings.Split(tmp, "")
+		indexed += " " + strings.Join(split, " ")
+		if i == 2 {
+			indexed += "  " + CardName(st.suspendedCard)
+		}
+		indexed += "\n"
+	}
+	indexed += "   A B C D E\n"
+
+
+	// add cards for both players
+	var formatted string
+	brownIndex = BrownPlayer*NrOfPlayerCards
+	for i := 0; i < NrOfPlayerCards; i++ {
+		formatted += CardName(st.playerCards[int(brownIndex) + i]) + ", "
+	}
+
+	// add the pieces
+	formatted += "\n" + indexed + "\n"
+
+	blueIndex = BluePlayer*NrOfPlayerCards
+	for i := 0; i < NrOfPlayerCards; i++ {
+		formatted += CardName(st.playerCards[int(blueIndex) + i]) + ", "
+	}
+
+	return formatted + "\n"
+}
+
 func (st *State) GenerateMoves() {
 	if st.hasWon {
 		return
@@ -66,11 +181,17 @@ func (st *State) CreateGame(cards []Card) {
 	}
 	st.suspendedCard = cards[len(cards)-1]
 
-	st.otherPlayer = BluePlayer
-	st.activePlayer = BrownPlayer
+	st.otherPlayer = BrownPlayer
+	st.activePlayer = BluePlayer
 
-	st.temples[BrownPlayer] = TempleBottom
-	st.temples[BluePlayer] = TempleTop
+	st.temples[st.otherPlayer] = TempleTop
+	st.temples[st.activePlayer] = TempleBottom
+
+	// populate board with pieces
+	st.board[st.otherPlayer * NrOfPieceTypes + MasterIndex] = MasterTop
+	st.board[st.otherPlayer * NrOfPieceTypes + StudentsIndex] = StudentsTop
+	st.board[st.activePlayer * NrOfPieceTypes + MasterIndex] = MasterBottom
+	st.board[st.activePlayer * NrOfPieceTypes + StudentsIndex] = StudentsBottom
 }
 
 func (st *State) UndoMove() {

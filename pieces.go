@@ -24,3 +24,11 @@ func NLSB(x *Board, i BoardIndex) BoardIndex {
 func boardIndexToBoard(i BoardIndex) Board {
 	return 1 << i
 }
+
+func BoardToIndex(x Board) BoardIndex {
+	return LSB(x)
+}
+
+func pieceAtBoardIndex(b Board, i BoardIndex) bool {
+	return (b & boardIndexToBoard(i)) > 0
+}
