@@ -19,11 +19,11 @@ func generateMoves(st *State) (moveIndex Index) {
 		}
 		pieces := friends
 		for i := LSB(pieces); i != 64; i = NLSB(&pieces, i) {
-			moves = moves >> (CardOffset - i)
-			moves ^= moves & friends // remove moves that hits a friendly warrior
-			moves &= BoardMask       // ignore positions outside the board
+			move := moves >> (CardOffset - i)
+			move ^= move & friends // remove moves that hits a friendly warrior
+			move &= BoardMask       // ignore positions outside the board
 
-			for j := LSB(moves); j != 64; j = NLSB(&moves, j) {
+			for j := LSB(move); j != 64; j = NLSB(&move, j) {
 				st.generatedMoves[moveIndex] = encodeMove(st, i, j, c)
 				moveIndex++
 			}
