@@ -14,8 +14,8 @@ func generateMoves(st *State) (moveIndex Index) {
 		moves := st.playerCards[c]
 		// TODO: remove if sentence
 		// add some virtual layer
-		if st.activePlayer == OppositePlayer {
-			moves = rotateCard(moves)
+		if st.currentDepth%2 == 1 {
+			moves = RotateCard(moves)
 		}
 		pieces := friends
 		for i := LSB(pieces); i != 64; i = NLSB(&pieces, i) {

@@ -10,13 +10,13 @@ func TestOnitama(t *testing.T) {
 	fmt.Println(st)
 
 	st.GenerateMoves()
-	moves := st.generatedMoves
+	moves := st.generatedMoves[:st.generatedMovesLen]
 	cards := st.playerCards[:]
 	player := st.activePlayer
 	for i := range moves {
 		move := moves[i]
 		if move == 0 {
-			continue
+			panic("empty")
 		}
 
 		fmt.Println("moved:", explainMove(move, player, cards))

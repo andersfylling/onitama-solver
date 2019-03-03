@@ -157,11 +157,12 @@ const (
 	CardOffset BoardIndex = 0x2d
 )
 
-func rotateCard(card Card) Card {
+func RotateCard(card Card) Card {
 	// Rotate the move card and shift it into the original position
-	card = RotateBoard(card)
-	card = card << 3     // columns to the left
-	card = card << 8 * 3 // rows up
+	card = FlipVertical(card)
+	card = FlipHorizontal(card)
+	card = card << 3
+	card = card << (8 * 3)
 
 	return card
 }

@@ -164,6 +164,8 @@ func (st *State) GenerateMoves() {
 		return
 	}
 
+	st.generatedMovesLen = 0
+
 	// WARNING: remember to add the generated moves to your game tree as these will be overwritten at the next depth.
 	generateMoves(st)
 }
@@ -209,6 +211,22 @@ func (st *State) UndoMove() {
 	cardIndex := NrOfPlayerCards*st.activePlayer + getMoveCardIndex(move)
 	st.swapCard(cardIndex)
 	st.currentDepth--
+
+	// execute the move backwards
+	from := getMoveTo(move)
+	to := getMoveFrom(move)
+
+	friendlyBoardIndex := getMoveFriendlyBoardIndex(move)
+	hostileBoardIndex := getMoveHostileBoardIndex(move)
+
+	// update active player
+	moveBoard := boardIndexToBoard(from) | boardIndexToBoard(to)
+	st.board[st.activePlayer*NrOfPieceTypes+friendlyBoardIndex] ^= moveBoard
+
+	// update opponent
+	st.board[st.otherPlayer*NrOfPieceTypes+hostileBoardIndex] ^= boardIndexToBoard(to)
+	st.board[NrOfPlayers*st.otherPlayer+0] = (st.board[NrOfPlayers*st.otherPlayer+0] | moveBoard) ^ moveBoard
+	st.board[NrOfPlayers*st.otherPlayer+1] = (st.board[NrOfPlayers*st.otherPlayer+1] | moveBoard) ^ moveBoard
 }
 
 func (st *State) ApplyMove(move Move) {
@@ -234,11 +252,6 @@ func (st *State) ApplyMove(move Move) {
 	st.board[st.otherPlayer*NrOfPieceTypes+hostileBoardIndex] ^= boardIndexToBoard(to)
 	st.board[NrOfPlayers*st.otherPlayer+0] = (st.board[NrOfPlayers*st.otherPlayer+0] | moveBoard) ^ moveBoard
 	st.board[NrOfPlayers*st.otherPlayer+1] = (st.board[NrOfPlayers*st.otherPlayer+1] | moveBoard) ^ moveBoard
-
-	//// TODO: remove comparison
-	//st.hasWon = getMoveWin(move) == 1
-
-	st.generatedMovesLen = 0
 
 	// the move represents the change needed to be done, to reach this depth...
 	st.currentDepth++ // TODO: decrement after?
