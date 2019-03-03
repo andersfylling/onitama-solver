@@ -197,7 +197,6 @@ func DrawCards() (selection []Card) {
 	return
 }
 
-
 const _Card_name = "RabbitCobraRoosterCraneOxHorseBoarCrabEelGooseFrogMantisMonkeyElephantDragonTiger"
 
 var _Card_map = map[Card]string{

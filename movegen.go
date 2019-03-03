@@ -21,7 +21,7 @@ func generateMoves(st *State) (moveIndex Index) {
 		for i := LSB(pieces); i != 64; i = NLSB(&pieces, i) {
 			move := moves >> (CardOffset - i)
 			move ^= move & friends // remove moves that hits a friendly warrior
-			move &= BoardMask       // ignore positions outside the board
+			move &= BoardMask      // ignore positions outside the board
 
 			for j := LSB(move); j != 64; j = NLSB(&move, j) {
 				st.generatedMoves[moveIndex] = encodeMove(st, i, j, c)

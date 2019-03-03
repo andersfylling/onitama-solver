@@ -86,12 +86,12 @@ func (st *State) String() string {
 	// create a 5x5 board representation
 	board := CreateRunes(empty, 25)
 
-	blueIndex := BluePlayer*NrOfPieceTypes
-	brownIndex := BrownPlayer*NrOfPieceTypes
-	blueTempleIndex := 24 - 2 // reversed
+	blueIndex := BluePlayer * NrOfPieceTypes
+	brownIndex := BrownPlayer * NrOfPieceTypes
+	blueTempleIndex := 24 - 2   // reversed
 	brownTempleIndex := 24 - 22 // reversed
-	bluePieces := Merge(st.board[blueIndex:blueIndex+NrOfPieceTypes-1])
-	brownPieces := Merge(st.board[brownIndex:brownIndex+NrOfPieceTypes-1])
+	bluePieces := Merge(st.board[blueIndex : blueIndex+NrOfPieceTypes-1])
+	brownPieces := Merge(st.board[brownIndex : brownIndex+NrOfPieceTypes-1])
 
 	for i := LSB(bluePieces); i != 64; i = NLSB(&bluePieces, i) {
 		index := bitboardIndexToOnitamaIndex(i)
@@ -100,8 +100,8 @@ func (st *State) String() string {
 
 		if pieceAtBoardIndex(st.board[blueIndex+MasterIndex], i) {
 			board[index] = blueMaster
-			if index != 24 - 2 {
-				board[24 - 2] = blueTemple
+			if index != 24-2 {
+				board[24-2] = blueTemple
 			}
 		} else {
 			board[index] = blueStudent
@@ -129,7 +129,7 @@ func (st *State) String() string {
 	// add new lines, spacing, rows and col identifiers
 	// and the idle card
 	var indexed string = "\n"
-	rows := []int64{5,4,3,2,1}
+	rows := []int64{5, 4, 3, 2, 1}
 	for i := range rows {
 		tmp := strconv.FormatInt(rows[i], 10) + string(board[5*i:5*i+5])
 		split := strings.Split(tmp, "")
@@ -141,20 +141,19 @@ func (st *State) String() string {
 	}
 	indexed += "   A B C D E\n"
 
-
 	// add cards for both players
 	var formatted string
-	brownIndex = BrownPlayer*NrOfPlayerCards
+	brownIndex = BrownPlayer * NrOfPlayerCards
 	for i := 0; i < NrOfPlayerCards; i++ {
-		formatted += CardName(st.playerCards[int(brownIndex) + i]) + ", "
+		formatted += CardName(st.playerCards[int(brownIndex)+i]) + ", "
 	}
 
 	// add the pieces
 	formatted += "\n" + indexed + "\n"
 
-	blueIndex = BluePlayer*NrOfPlayerCards
+	blueIndex = BluePlayer * NrOfPlayerCards
 	for i := 0; i < NrOfPlayerCards; i++ {
-		formatted += CardName(st.playerCards[int(blueIndex) + i]) + ", "
+		formatted += CardName(st.playerCards[int(blueIndex)+i]) + ", "
 	}
 
 	return formatted + "\n----------------\n"
@@ -189,10 +188,10 @@ func (st *State) CreateGame(cards []Card) {
 	st.temples[st.activePlayer] = TempleBottom
 
 	// populate board with pieces
-	st.board[st.otherPlayer * NrOfPieceTypes + MasterIndex] = MasterTop
-	st.board[st.otherPlayer * NrOfPieceTypes + StudentsIndex] = StudentsTop
-	st.board[st.activePlayer * NrOfPieceTypes + MasterIndex] = MasterBottom
-	st.board[st.activePlayer * NrOfPieceTypes + StudentsIndex] = StudentsBottom
+	st.board[st.otherPlayer*NrOfPieceTypes+MasterIndex] = MasterTop
+	st.board[st.otherPlayer*NrOfPieceTypes+StudentsIndex] = StudentsTop
+	st.board[st.activePlayer*NrOfPieceTypes+MasterIndex] = MasterBottom
+	st.board[st.activePlayer*NrOfPieceTypes+StudentsIndex] = StudentsBottom
 }
 
 func (st *State) UndoMove() {
@@ -220,27 +219,29 @@ func (st *State) ApplyMove(move Move) {
 	friendlyBoardIndex := getMoveFriendlyBoardIndex(move)
 	hostileBoardIndex := getMoveHostileBoardIndex(move)
 
-	st.board[st.activePlayer*NrOfPieceTypes+friendlyBoardIndex] ^= from | to
-	st.board[st.otherPlayer*NrOfPieceTypes+hostileBoardIndex] ^= to
-
-	moveBoard := getMoveFrom(move) | getMoveTo(move)
-	var offset Amount // piece type. TODO: remove if sentence
-	if (st.board[NrOfPlayers*st.activePlayer+1] & moveBoard) > 0 {
-		offset++
-	}
-	st.board[NrOfPlayers*st.activePlayer+offset] ^= moveBoard
+	// update active player
+	st.board[st.activePlayer*NrOfPieceTypes+friendlyBoardIndex] ^= boardIndexToBoard(from) | boardIndexToBoard(to)
 
 	// update opponent
+	moveBoard := boardIndexToBoard(from) | boardIndexToBoard(to)
+	//var offset Amount // piece type. TODO: remove if sentence
+	//if (st.board[NrOfPlayers*st.activePlayer+1] & moveBoard) > 0 {
+	//	offset++
+	//}
+	//st.board[NrOfPlayers*st.activePlayer+offset] ^= moveBoard
+
+	// update opponent
+	st.board[st.otherPlayer*NrOfPieceTypes+hostileBoardIndex] ^= boardIndexToBoard(to)
 	st.board[NrOfPlayers*st.otherPlayer+0] = (st.board[NrOfPlayers*st.otherPlayer+0] | moveBoard) ^ moveBoard
 	st.board[NrOfPlayers*st.otherPlayer+1] = (st.board[NrOfPlayers*st.otherPlayer+1] | moveBoard) ^ moveBoard
 
-	// TODO: remove comparison
-	st.hasWon = getMoveWin(move) == 1
+	//// TODO: remove comparison
+	//st.hasWon = getMoveWin(move) == 1
 
 	st.generatedMovesLen = 0
 
 	// the move represents the change needed to be done, to reach this depth...
-	st.currentDepth++
+	st.currentDepth++ // TODO: decrement after?
 	st.previousMoves[st.currentDepth] = move
 
 	// adjust for the player offset

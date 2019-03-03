@@ -49,10 +49,10 @@ const (
 	TempleTop    Board = 0x80000000000
 	TempleBottom Board = 0x800
 
-	StudentsTop Board = 0x360000000000
-	StudentsBottom Board =0x3600
+	StudentsTop    Board = 0x360000000000
+	StudentsBottom Board = 0x3600
 
-	MasterTop Board = TempleTop
+	MasterTop    Board = TempleTop
 	MasterBottom Board = TempleBottom
 )
 
@@ -144,5 +144,5 @@ func Col(i BoardIndex) int {
 }
 
 func BoardPos(col, row BoardIndex) string {
-	return string('A' + col) + strconv.FormatInt(int64(row + 1), 10)
+	return string('A'+col) + strconv.FormatInt(int64(row+1), 10)
 }

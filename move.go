@@ -31,24 +31,24 @@ func getMoveFrom(m Move) BoardIndex {
 }
 
 func setMoveAction(m Move, action MoveAction) Move {
-	action = 0x7 & action
+	action = 7 & action
 	action = action << 12
 	return m | Move(action)
 }
 
 func getMoveWin(m Move) Index {
-	return Index(getMoveAction(m) & 0x1)
+	return Index(getMoveAction(m) & 1)
 }
 
 func getMoveFriendlyBoardIndex(m Move) Index {
 	action := getMoveAction(m)
-	return Index((action & 0x2) >> 0x1)
+	return Index((action & 2) >> 1)
 }
 
 func getMoveHostileBoardIndex(m Move) Index {
 	action := getMoveAction(m)
-	master := action & 0x1
-	temple := action & 0x4
+	master := action & 1
+	temple := action & 4
 	return Index((temple >> 1) | (((temple >> 2) | master) ^ (temple >> 2)))
 }
 
@@ -57,12 +57,7 @@ func getMoveAction(m Move) Move {
 }
 
 func getPieceMoved(m Move) Piece {
-	action := getMoveAction(m)
-	if action == 0 || action == 1 || action == 4 || action == 5 {
-		return Student
-	}
-
-	return Master
+	return Piece(getMoveFriendlyBoardIndex(m)) // Master == 1, Student == 0
 }
 
 func setMoveCardIndex(m Move, index BoardIndex) Move {
@@ -75,20 +70,41 @@ func getMoveCardIndex(m Move) BoardIndex {
 
 func encodeMove(st *State, fromIndex, toIndex, cardIndex BoardIndex) (move Move) {
 	move = resetMove(move) // in case code gets change, and re-used populated bits later on
+
+	///////////////////
+	// From
+	///////////////////
 	move = setMoveFrom(move, fromIndex)
+
+	///////////////////
+	// To
+	///////////////////
 	move = setMoveTo(move, toIndex)
 
+	///////////////////
+	// Action
+	///////////////////
 	// mark the win bit if the temple or a master is taken
 	win := st.temples[st.otherPlayer] >> toIndex
 	win |= st.board[st.otherPlayer*NrOfPieceTypes+MasterIndex] >> toIndex
-	win &= 0x1
+	win &= 1 // filter out unwanted bits
 
-	pieceType := st.board[st.otherPlayer*NrOfPieceTypes+MasterIndex] >> fromIndex
-	pieceType &= 0x1 // redundant
+	// set which piece type was moved
+	master := st.board[st.activePlayer*NrOfPieceTypes+MasterIndex] >> fromIndex
+	master &= 1 // filter out unwanted bits
 
-	action := (0x4 & (st.temples[st.otherPlayer] >> (toIndex + 2))) | (pieceType << 1) | win
+	// dafuq?
+	temple := st.temples[st.otherPlayer] >> (toIndex + 2)
+	temple &= 4 // filter out unwanted bits
+
+	// merge actions
+	action := temple | (master << 1) | win
 	move = setMoveAction(move, action)
 
+	///////////////////
+	// Card Selection
+	// -> relative to current state: 0 or 1
+	///////////////////
 	move = setMoveCardIndex(move, cardIndex)
 
 	return move
@@ -103,7 +119,7 @@ func explainMove(m Move, playerIndex BoardIndex, cardsBeforeMove []Card) string 
 	row2 := to / 5
 	col2 := 4 - (to % 5) // reversed, due to string
 
-	card := cardsBeforeMove[playerIndex * NrOfPlayerCards + getMoveCardIndex(m)]
+	card := cardsBeforeMove[playerIndex*NrOfPlayerCards+getMoveCardIndex(m)]
 
 	var piece string
 	if getPieceMoved(m) == Master {

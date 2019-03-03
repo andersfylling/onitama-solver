@@ -1,6 +1,5 @@
 package onitamago
 
-
 func CreateRunes(char rune, length int) []rune {
 	runes := make([]rune, 0, length)
 	for i := 0; i < length; i++ {

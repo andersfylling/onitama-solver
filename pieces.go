@@ -11,8 +11,8 @@ const (
 	StudentsIndex Index = 0
 	MasterIndex   Index = 1
 
-	Master Piece = iota
-	Student
+	Student Piece = 0
+	Master  Piece = 1
 )
 
 // LSB Least Significant Bit
