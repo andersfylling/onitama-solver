@@ -1,8 +1,8 @@
 package onitamago
 
-func NewGame() (st *State) {
-	st = &State{}
+func NewGame() (st State, game Game) {
+	st = State{}
 	st.CreateGame(nil)
 
-	return
+	return st, Game{}
 }

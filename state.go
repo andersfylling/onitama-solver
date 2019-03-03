@@ -1,7 +1,6 @@
 package onitamago
 
 import (
-	"fmt"
 	"strconv"
 	"strings"
 )
@@ -51,9 +50,9 @@ type State struct {
 	currentDepth  Index
 }
 
-var _ fmt.Stringer = (*State)(nil)
+//var _ fmt.Stringer = (*State)(nil)
 
-func (st *State) String() string {
+func (st State) String() string {
 	// white = who ever moves first
 	// this can be determined using State.currentDepth
 	const blueStudent = '♟'
@@ -160,11 +159,10 @@ func (st *State) String() string {
 }
 
 func (st *State) GenerateMoves() {
+	st.generatedMovesLen = 0
 	if st.hasWon {
 		return
 	}
-
-	st.generatedMovesLen = 0
 
 	// WARNING: remember to add the generated moves to your game tree as these will be overwritten at the next depth.
 	generateMoves(st)
