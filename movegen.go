@@ -11,15 +11,15 @@ func pieces(player BoardIndex, board [NrOfPlayers * NrOfPieceTypes]Board) Board 
 func generateMoves(st *State) (moveIndex Index) {
 	friends := pieces(st.activePlayer, st.board)
 	for c := st.activePlayer * NrOfPlayerCards; c < (st.activePlayer*NrOfPlayerCards + NrOfPlayerCards); c++ {
-		moves := st.playerCards[c]
+		card := st.playerCards[c]
 		// TODO: remove if sentence
 		// add some virtual layer
 		if st.currentDepth%2 == 1 {
-			moves = RotateCard(moves)
+			card = RotateCard(card)
 		}
 		pieces := friends
 		for i := LSB(pieces); i != 64; i = NLSB(&pieces, i) {
-			move := moves >> (CardOffset - i)
+			move := card >> (CardOffset - i)
 			move ^= move & friends // remove moves that hits a friendly warrior
 			move &= BoardMask      // ignore positions outside the board
 

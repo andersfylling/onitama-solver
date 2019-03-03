@@ -1,6 +1,7 @@
 package onitamago
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 )
@@ -99,9 +100,6 @@ func (st State) String() string {
 
 		if pieceAtBoardIndex(st.board[blueIndex+MasterIndex], i) {
 			board[index] = blueMaster
-			if index != 24-2 {
-				board[24-2] = blueTemple
-			}
 		} else {
 			board[index] = blueStudent
 		}
@@ -194,7 +192,10 @@ func (st *State) CreateGame(cards []Card) {
 	st.board[st.activePlayer*NrOfPieceTypes+StudentsIndex] = StudentsBottom
 }
 
-func (st *State) UndoMove() {
+func (st *State) UndoMove(move Move) {
+	if st.currentDepth == 0 {
+		return
+	}
 	// TODO: undo move
 	if !st.hasWon {
 		// if it is a winning node, the previously generated moves have not been overwritten
@@ -203,12 +204,17 @@ func (st *State) UndoMove() {
 	st.hasWon = false // you can never go beyond a winning node
 	st.changePlayer() // we need to make changes to the previous player, not the current
 
-	move := st.previousMoves[st.currentDepth]
+	//move := st.previousMoves[st.currentDepth]
+	if st.previousMoves[st.currentDepth] != move {
+		fmt.Println(st)
+		fmt.Printf("%+v\n", st.previousMoves)
+		panic(fmt.Sprintln(st.previousMoves[st.currentDepth], move))
+	}
+	st.currentDepth--
 
 	// adjust for the player offset
 	cardIndex := NrOfPlayerCards*st.activePlayer + getMoveCardIndex(move)
 	st.swapCard(cardIndex)
-	st.currentDepth--
 
 	// update boards
 	from := getMoveFrom(move)
@@ -217,9 +223,8 @@ func (st *State) UndoMove() {
 	friendlyBoardIndex := getMoveFriendlyBoardIndex(move)
 	hostileBoardIndex := getMoveHostileBoardIndex(move)
 
-	// update active player
 	st.board[st.activePlayer*NrOfPieceTypes+friendlyBoardIndex] ^= boardIndexToBoard(from) | boardIndexToBoard(to)
-	st.board[st.otherPlayer*NrOfPieceTypes+hostileBoardIndex] ^= boardIndexToBoard(to)
+	st.board[st.otherPlayer*NrOfPieceTypes+hostileBoardIndex] |= boardIndexToBoard(to)
 }
 
 func (st *State) ApplyMove(move Move) {

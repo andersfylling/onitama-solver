@@ -31,7 +31,7 @@ func getMoveFrom(m Move) BoardIndex {
 }
 
 func setMoveAction(m Move, action MoveAction) Move {
-	action = 7 & action
+	action = 7 & action // 0b0111 & 0bxxxx
 	action = action << 12
 	return m | Move(action)
 }
@@ -50,6 +50,19 @@ func getMoveHostileBoardIndex(m Move) Index {
 	master := action & 1
 	temple := action & 4
 	return Index((temple >> 1) | (((temple >> 2) | master) ^ (temple >> 2)))
+}
+
+// getMoveActionAttackedPieceBoard if a piece was attacked, this returns the
+// board where the related bit is set.
+// This should be used together with getMoveHostileBoardIndex to handle
+// temple attacks.
+func getMoveActionAttackedPieceBoard(m Move) Board {
+	action := getMoveAction(m)
+	if (action & 4) > 0 {
+		return 0
+	}
+
+	return boardIndexToBoard(getMoveTo(m))
 }
 
 func getMoveAction(m Move) Move {
@@ -93,17 +106,19 @@ func encodeMove(st *State, fromIndex, toIndex, cardIndex BoardIndex) (move Move)
 	master := st.board[st.activePlayer*NrOfPieceTypes+MasterIndex] >> fromIndex
 	master &= 1 // filter out unwanted bits
 
-	// dafuq?
-	temple := st.temples[st.otherPlayer] >> (toIndex + 2)
-	temple &= 4 // filter out unwanted bits
+	// weakAttack regards attacks that kills no student, nor master.
+	attack := st.board[st.otherPlayer*NrOfPieceTypes+StudentsIndex] | st.board[st.otherPlayer*NrOfPieceTypes+MasterIndex]
+	attack = attack >> toIndex
+	attack &= 1                   // filter out unwanted bits
+	noAttack := 4 ^ (attack << 2) // 0b100 ^ (0b001 << 2) == 0 or 0b100 ^ (0b000 << 2) == 0b100
 
 	// merge actions
-	action := temple | (master << 1) | win
+	action := noAttack | (master << 1) | win
 	move = setMoveAction(move, action)
 
 	///////////////////
 	// Card Selection
-	// -> relative to current state: 0 or 1
+	// -> relative to current state. Card is either 0 or 1
 	///////////////////
 	move = setMoveCardIndex(move, cardIndex)
 
@@ -128,5 +143,10 @@ func explainMove(m Move, playerIndex BoardIndex, cardsBeforeMove []Card) string 
 		piece = "student"
 	}
 
-	return piece + "{" + BoardPos(col1, row1) + " => " + BoardPos(col2, row2) + ", " + CardName(card) + "}"
+	var winner string
+	if getMoveWin(m) == 1 {
+		winner = ", WINNER"
+	}
+
+	return piece + "{" + BoardPos(col1, row1) + " => " + BoardPos(col2, row2) + ", " + CardName(card) + "}" + winner
 }
