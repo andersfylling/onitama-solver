@@ -63,9 +63,9 @@ func Perft(st State, depth int) {
 			if getMoveWin(st.generatedMoves[i]) == 1 {
 				// skip winner nodes
 				wins++
-				//st.ApplyMove(st.generatedMoves[i])
-				//PrintWinnerPath(st)
-				//st.UndoMove()
+				st.ApplyMove(st.generatedMoves[i])
+				PrintWinnerPath(st)
+				st.UndoMove()
 			} else {
 				next++
 				game.Tree[next] = st.generatedMoves[i]
@@ -102,7 +102,7 @@ func TestPerft(t *testing.T) {
 		Tiger,
 	})
 
-	const depth = 3
+	const depth = 2
 	for i := 1; i <= depth; i++ {
 		Perft(st, i)
 	}
@@ -113,5 +113,39 @@ func BenchmarkState_GenerateMoves(b *testing.B) {
 	st.CreateGame(nil)
 	for i := 0; i < b.N; i++ {
 		st.GenerateMoves()
+	}
+}
+
+func TestRandomSampling(t *testing.T) {
+	st := State{}
+	st.CreateGame(nil)
+
+	stCopy := st
+
+	for i := 0; i < 10; i++ {
+		st.GenerateMoves()
+		if st.generatedMovesLen == 0 {
+			break
+		}
+
+		st.ApplyMove(st.generatedMoves[0])
+	}
+
+	for {
+		st.UndoMove()
+		if st.currentDepth == 0 {
+			break
+		}
+	}
+
+	if st.String() != stCopy.String() {
+		var cards string
+		for i := range stCopy.playerCards {
+			cards += CardName(stCopy.playerCards[i]) + ", "
+		}
+		cards += CardName(stCopy.suspendedCard)
+		t.Errorf("apply and undo move create different roots. Card config: %s\n", cards)
+		fmt.Println(st)
+		fmt.Println(stCopy)
 	}
 }

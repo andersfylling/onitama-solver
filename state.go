@@ -210,21 +210,16 @@ func (st *State) UndoMove() {
 	st.swapCard(cardIndex)
 	st.currentDepth--
 
-	// execute the move backwards
-	from := getMoveTo(move)
-	to := getMoveFrom(move)
+	// update boards
+	from := getMoveFrom(move)
+	to := getMoveTo(move)
 
 	friendlyBoardIndex := getMoveFriendlyBoardIndex(move)
 	hostileBoardIndex := getMoveHostileBoardIndex(move)
 
 	// update active player
-	moveBoard := boardIndexToBoard(from) | boardIndexToBoard(to)
-	st.board[st.activePlayer*NrOfPieceTypes+friendlyBoardIndex] ^= moveBoard
-
-	// update opponent
+	st.board[st.activePlayer*NrOfPieceTypes+friendlyBoardIndex] ^= boardIndexToBoard(from) | boardIndexToBoard(to)
 	st.board[st.otherPlayer*NrOfPieceTypes+hostileBoardIndex] ^= boardIndexToBoard(to)
-	st.board[NrOfPlayers*st.otherPlayer+0] = (st.board[NrOfPlayers*st.otherPlayer+0] | moveBoard) ^ moveBoard
-	st.board[NrOfPlayers*st.otherPlayer+1] = (st.board[NrOfPlayers*st.otherPlayer+1] | moveBoard) ^ moveBoard
 }
 
 func (st *State) ApplyMove(move Move) {
@@ -235,21 +230,9 @@ func (st *State) ApplyMove(move Move) {
 	friendlyBoardIndex := getMoveFriendlyBoardIndex(move)
 	hostileBoardIndex := getMoveHostileBoardIndex(move)
 
-	// update active player
+	// update boards
 	st.board[st.activePlayer*NrOfPieceTypes+friendlyBoardIndex] ^= boardIndexToBoard(from) | boardIndexToBoard(to)
-
-	// update opponent
-	moveBoard := boardIndexToBoard(from) | boardIndexToBoard(to)
-	//var offset Amount // piece type. TODO: remove if sentence
-	//if (st.board[NrOfPlayers*st.activePlayer+1] & moveBoard) > 0 {
-	//	offset++
-	//}
-	//st.board[NrOfPlayers*st.activePlayer+offset] ^= moveBoard
-
-	// update opponent
 	st.board[st.otherPlayer*NrOfPieceTypes+hostileBoardIndex] ^= boardIndexToBoard(to)
-	st.board[NrOfPlayers*st.otherPlayer+0] = (st.board[NrOfPlayers*st.otherPlayer+0] | moveBoard) ^ moveBoard
-	st.board[NrOfPlayers*st.otherPlayer+1] = (st.board[NrOfPlayers*st.otherPlayer+1] | moveBoard) ^ moveBoard
 
 	// the move represents the change needed to be done, to reach this depth...
 	st.currentDepth++ // TODO: decrement after?
