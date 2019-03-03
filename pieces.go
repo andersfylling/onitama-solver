@@ -2,12 +2,17 @@ package onitamago
 
 import "math/bits"
 
+type Piece = Move // to simplify move extraction
+
 const (
 	NrOfPieceTypes   Amount = 3 // student, master, temple. temples cannot move
 	NrOfPlayerPieces Amount = 5
 
 	StudentsIndex Index = 0
 	MasterIndex   Index = 1
+
+	Master Piece = iota
+	Student
 )
 
 // LSB Least Significant Bit

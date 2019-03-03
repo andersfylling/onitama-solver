@@ -56,6 +56,15 @@ func getMoveAction(m Move) Move {
 	return (m & MoveMaskAction) >> 12
 }
 
+func getPieceMoved(m Move) Piece {
+	action := getMoveAction(m)
+	if action == 0 || action == 1 || action == 4 || action == 5 {
+		return Student
+	}
+
+	return Master
+}
+
 func setMoveCardIndex(m Move, index BoardIndex) Move {
 	return m | Move(index<<15)
 }
@@ -83,4 +92,25 @@ func encodeMove(st *State, fromIndex, toIndex, cardIndex BoardIndex) (move Move)
 	move = setMoveCardIndex(move, cardIndex)
 
 	return move
+}
+
+func explainMove(m Move, playerIndex BoardIndex, cardsBeforeMove []Card) string {
+	from := bitboardIndexToOnitamaIndex(getMoveFrom(m))
+	to := bitboardIndexToOnitamaIndex(getMoveTo(m))
+
+	row1 := from / 5
+	col1 := 4 - (from % 5) // reversed, due to string
+	row2 := to / 5
+	col2 := 4 - (to % 5) // reversed, due to string
+
+	card := cardsBeforeMove[playerIndex * NrOfPlayerCards + getMoveCardIndex(m)]
+
+	var piece string
+	if getPieceMoved(m) == Master {
+		piece = "master"
+	} else {
+		piece = "student"
+	}
+
+	return piece + "{" + BoardPos(col1, row1) + " => " + BoardPos(col2, row2) + ", " + CardName(card) + "}"
 }

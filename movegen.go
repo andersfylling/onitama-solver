@@ -2,7 +2,7 @@ package onitamago
 
 func pieces(player BoardIndex, board [NrOfPlayers * NrOfPieceTypes]Board) Board {
 	// bind the function to our compile time assumption
-	if NrOfPieceTypes != 2 {
+	if NrOfPieceTypes != 3 {
 		panic("NrOfPieceTypes is no longer 2")
 	}
 	return board[player*NrOfPieceTypes] | board[player*NrOfPieceTypes+1]
@@ -17,7 +17,8 @@ func generateMoves(st *State) (moveIndex Index) {
 		if st.activePlayer == OppositePlayer {
 			moves = rotateCard(moves)
 		}
-		for i := LSB(friends); i != 64; i = NLSB(&friends, i) {
+		pieces := friends
+		for i := LSB(pieces); i != 64; i = NLSB(&pieces, i) {
 			moves = moves >> (CardOffset - i)
 			moves ^= moves & friends // remove moves that hits a friendly warrior
 			moves &= BoardMask       // ignore positions outside the board

@@ -157,7 +157,7 @@ func (st *State) String() string {
 		formatted += CardName(st.playerCards[int(blueIndex) + i]) + ", "
 	}
 
-	return formatted + "\n"
+	return formatted + "\n----------------\n"
 }
 
 func (st *State) GenerateMoves() {
@@ -173,16 +173,17 @@ func (st *State) CreateGame(cards []Card) {
 	if len(cards) == 0 {
 		cards = DrawCards() // random cards
 	}
+
+	st.otherPlayer = BrownPlayer
+	st.activePlayer = BluePlayer
+
 	for i := Index(0); i < 2; i++ {
-		brownIndex := NrOfPlayerCards*BrownPlayer + i
-		blueIndex := NrOfPlayerCards*BluePlayer + i
+		brownIndex := NrOfPlayerCards*st.otherPlayer + i
+		blueIndex := NrOfPlayerCards*st.activePlayer + i
 		st.playerCards[brownIndex] = cards[brownIndex]
 		st.playerCards[blueIndex] = cards[blueIndex]
 	}
 	st.suspendedCard = cards[len(cards)-1]
-
-	st.otherPlayer = BrownPlayer
-	st.activePlayer = BluePlayer
 
 	st.temples[st.otherPlayer] = TempleTop
 	st.temples[st.activePlayer] = TempleBottom

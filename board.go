@@ -1,5 +1,7 @@
 package onitamago
 
+import "strconv"
+
 // Board type is based off on bitboards. But uses a sub-mask to identify the 5x5 board (range <10, 46>).
 //  63	62	61	60	59	58	57	56
 //  55	54	53	52	51	50	49	48
@@ -34,6 +36,12 @@ const (
 	R3Mask Board = R2Mask << 8
 	R4Mask Board = R3Mask << 8
 	R5Mask Board = R4Mask << 8
+
+	AMask Board = 0x202020202000
+	BMask Board = AMask >> 8
+	CMask Board = BMask >> 8
+	DMask Board = CMask >> 8
+	EMask Board = DMask >> 8
 
 	// BoardMaskOffset ...
 	BoardMaskOffset BoardIndex = 0x9
@@ -99,4 +107,42 @@ func bitboardIndexToOnitamaIndex(i BoardIndex) BoardIndex {
 	}
 
 	return i - diff
+}
+
+func Row(i BoardIndex) int {
+	board := boardIndexToBoard(i)
+	if (board & R5Mask) > 0 {
+		return 5
+	} else if (board & R4Mask) > 0 {
+		return 4
+	} else if (board & R3Mask) > 0 {
+		return 3
+	} else if (board & R2Mask) > 0 {
+		return 2
+	} else if (board & R1Mask) > 0 {
+		return 1
+	}
+
+	panic("no matching row for index")
+}
+
+func Col(i BoardIndex) int {
+	board := boardIndexToBoard(i)
+	if (board & R5Mask) > 0 {
+		return 5
+	} else if (board & R4Mask) > 0 {
+		return 4
+	} else if (board & R3Mask) > 0 {
+		return 3
+	} else if (board & R2Mask) > 0 {
+		return 2
+	} else if (board & R1Mask) > 0 {
+		return 1
+	}
+
+	panic("no matching row for index")
+}
+
+func BoardPos(col, row BoardIndex) string {
+	return string('A' + col) + strconv.FormatInt(int64(row + 1), 10)
 }
