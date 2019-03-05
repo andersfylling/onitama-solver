@@ -73,10 +73,12 @@ func Perft(cards []Card, depth int) {
 			totalNodes++
 			if st.hasWon {
 				wins++
+				st.UndoMove() //moves[i])
+				break
 			} else {
 				nodes += perft(depth - 1)
 			}
-			st.UndoMove(moves[i])
+			st.UndoMove() //moves[i])
 		}
 		return nodes
 	}
@@ -133,6 +135,60 @@ func Perft(cards []Card, depth int) {
 
 }
 
+func perftIterative(cards []Card, depth int) (leafs uint64, moves uint64, duration time.Duration) {
+	stack := Stack{}
+
+	st := State{}
+	st.CreateGame(cards)
+	skipMove := ^Move(0)
+
+	start := time.Now()
+
+	// prepare stack and move indexing
+	st.GenerateMoves()
+	moves = uint64(st.generatedMovesLen)
+	if int(st.currentDepth+1) >= depth {
+		return moves, moves, time.Now().Sub(start)
+	}
+
+	// populate stack with some work
+	stack.Push(skipMove)
+	stack.PushMany(st.generatedMoves[:st.generatedMovesLen])
+	var move Move
+	var anyWins Move
+	for {
+		if move = stack.Pop(); move == skipMove {
+			// finished processing node children
+			for ; move == skipMove && stack.Size() > 0; move = stack.Pop() {
+				st.UndoMove()
+			}
+			if stack.Size() == 0 {
+				break
+			}
+		}
+
+		st.ApplyMove(move)
+		st.GenerateMoves()
+		moves += uint64(st.generatedMovesLen)
+
+		if int(st.currentDepth+1) >= depth {
+			leafs += uint64(st.generatedMovesLen)
+			st.UndoMove()
+		} else {
+			stack.Push(skipMove) // identify a new depth
+			anyWins = 0
+			for i := range st.generatedMoves[:st.generatedMovesLen] {
+				anyWins |= st.generatedMoves[i] & (1 << 12)
+			}
+			if anyWins == 0 {
+				stack.PushMany(st.generatedMoves[:st.generatedMovesLen])
+			}
+		}
+	}
+
+	return leafs, moves, time.Now().Sub(start)
+}
+
 func TestPerft(t *testing.T) {
 	cards := []Card{
 		Frog, Eel,
@@ -141,8 +197,10 @@ func TestPerft(t *testing.T) {
 	}
 
 	const depth = 4
-	for i := 0; i <= depth; i++ {
-		Perft(cards, i)
+	for i := 1; i <= depth; i++ {
+		leafs, moves, duration := perftIterative(cards, i)
+		perf := float64(moves) / float64(duration.Seconds())
+		fmt.Println("depth", i, ",leafs", leafs, fmt.Sprintf(",moves/sec %0.2f", perf), ",duration", duration)
 	}
 }
 
@@ -154,7 +212,7 @@ func BenchmarkState_GenerateMoves(b *testing.B) {
 	}
 }
 
-func TestState_ApplyMove(t *testing.T) {
+func TestState_GenerateMoves_Winner(t *testing.T) {
 	st := NewState()
 	st.CreateGame([]Card{
 		Frog, Eel,
@@ -224,7 +282,7 @@ func TestRandomSampling(t *testing.T) {
 	//fmt.Println("REVERSING")
 	for i := len(moves) - 1; i >= 0; i-- {
 		//move := st.previousMoves[st.currentDepth]
-		st.UndoMove(moves[i])
+		st.UndoMove() //moves[i])
 		//fmt.Println(explainMove(move, st.activePlayer, st.playerCards[:]))
 		//fmt.Println(st)
 		if st.currentDepth == 0 {

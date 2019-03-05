@@ -1,7 +1,6 @@
 package onitamago
 
 import (
-	"fmt"
 	"strconv"
 	"strings"
 )
@@ -192,7 +191,7 @@ func (st *State) CreateGame(cards []Card) {
 	st.board[st.activePlayer*NrOfPieceTypes+StudentsIndex] = StudentsBottom
 }
 
-func (st *State) UndoMove(move Move) {
+func (st *State) UndoMove() {
 	if st.currentDepth == 0 {
 		return
 	}
@@ -204,12 +203,12 @@ func (st *State) UndoMove(move Move) {
 	st.hasWon = false // you can never go beyond a winning node
 	st.changePlayer() // we need to make changes to the previous player, not the current
 
-	//move := st.previousMoves[st.currentDepth]
-	if st.previousMoves[st.currentDepth] != move {
-		fmt.Println(st)
-		fmt.Printf("%+v\n", st.previousMoves)
-		panic(fmt.Sprintln(st.previousMoves[st.currentDepth], move))
-	}
+	move := st.previousMoves[st.currentDepth]
+	//if st.previousMoves[st.currentDepth] != move {
+	//	fmt.Println(st)
+	//	fmt.Printf("%+v\n", st.previousMoves)
+	//	panic(fmt.Sprintln(st.previousMoves[st.currentDepth], move))
+	//}
 	st.currentDepth--
 
 	// adjust for the player offset
