@@ -50,6 +50,18 @@ type State struct {
 	currentDepth  Index
 }
 
+func (st *State) MovesLen() int {
+	return st.generatedMovesLen
+}
+
+func (st *State) Moves() []Move {
+	return st.generatedMoves[:st.MovesLen()]
+}
+
+func (st *State) Depth() Index {
+	return st.currentDepth
+}
+
 //var _ fmt.Stringer = (*State)(nil)
 
 func (st State) String() string {

@@ -7,7 +7,7 @@ type MoveStack interface {
 
 type Stack struct {
 	i     int
-	stack [HighestNrOfMoves * NrOfPlayerPieces * MaxDepth]Move
+	stack [HighestNrOfMoves * NrOfPlayerPieces * NrOfPlayerCards * MaxDepth]Move
 }
 
 var _ MoveStack = (*Stack)(nil)

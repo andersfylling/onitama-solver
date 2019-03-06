@@ -7,32 +7,6 @@ import (
 	"time"
 )
 
-//
-//func TestOnitama(t *testing.T) {
-//	st := NewGame()
-//	fmt.Println(st)
-//
-//	st.GenerateMoves()
-//
-//	st.ApplyMove(st.generatedMoves[0])
-//	fmt.Println(st)
-//	st.GenerateMoves()
-//	moves := st.generatedMoves[:st.generatedMovesLen]
-//	cards := st.playerCards[:]
-//	player := st.activePlayer
-//	for i := range moves {
-//		move := moves[i]
-//		if move == 0 {
-//			panic("empty")
-//		}
-//
-//		fmt.Println("moved:", explainMove(move, player, cards))
-//		st.ApplyMove(move)
-//		fmt.Println(st)
-//		st.UndoMove()
-//	}
-//}
-
 func Perft(cards []Card, depth int) {
 	//game := Game{}
 
@@ -135,75 +109,6 @@ func Perft(cards []Card, depth int) {
 
 }
 
-func perftIterative(cards []Card, depth int) (leafs uint64, moves uint64, duration time.Duration) {
-	stack := Stack{}
-
-	st := State{}
-	st.CreateGame(cards)
-	skipMove := ^Move(0)
-
-	start := time.Now()
-
-	// prepare stack and move indexing
-	st.GenerateMoves()
-	moves = uint64(st.generatedMovesLen)
-	if int(st.currentDepth+1) >= depth {
-		return moves, moves, time.Now().Sub(start)
-	}
-
-	// populate stack with some work
-	stack.Push(skipMove)
-	stack.PushMany(st.generatedMoves[:st.generatedMovesLen])
-	var move Move
-	var anyWins Move
-	for {
-		if move = stack.Pop(); move == skipMove {
-			// finished processing node children
-			for ; move == skipMove && stack.Size() > 0; move = stack.Pop() {
-				st.UndoMove()
-			}
-			if stack.Size() == 0 {
-				break
-			}
-		}
-
-		st.ApplyMove(move)
-		st.GenerateMoves()
-		moves += uint64(st.generatedMovesLen)
-
-		if int(st.currentDepth+1) >= depth {
-			leafs += uint64(st.generatedMovesLen)
-			st.UndoMove()
-		} else {
-			stack.Push(skipMove) // identify a new depth
-			anyWins = 0
-			for i := range st.generatedMoves[:st.generatedMovesLen] {
-				anyWins |= st.generatedMoves[i] & (1 << 12)
-			}
-			if anyWins == 0 {
-				stack.PushMany(st.generatedMoves[:st.generatedMovesLen])
-			}
-		}
-	}
-
-	return leafs, moves, time.Now().Sub(start)
-}
-
-func TestPerft(t *testing.T) {
-	cards := []Card{
-		Frog, Eel,
-		Dragon, Crab,
-		Tiger,
-	}
-
-	const depth = 4
-	for i := 1; i <= depth; i++ {
-		leafs, moves, duration := perftIterative(cards, i)
-		perf := float64(moves) / float64(duration.Seconds())
-		fmt.Println("depth", i, ",leafs", leafs, fmt.Sprintf(",moves/sec %0.2f", perf), ",duration", duration)
-	}
-}
-
 func BenchmarkState_GenerateMoves(b *testing.B) {
 	st := State{}
 	st.CreateGame(nil)
@@ -300,4 +205,42 @@ func TestRandomSampling(t *testing.T) {
 		fmt.Println(st)
 		fmt.Println(stCopy)
 	}
+}
+
+var sink bool
+
+func BenchmarkSkippingWinningDepths(b *testing.B) {
+	data := []int{1, 4, 1, 1, 1, 2, 1, 2, 3, 1, 2, 1, 2}
+
+	//inline
+	extract := func(i int) int {
+		return (i & 4) >> 2 // (x & 0b100) >> 2 => 0 or 1
+	}
+
+	b.Run("merge", func(b *testing.B) {
+		var m int
+		for i := 0; i < b.N; i++ {
+			m = 0
+			for i := range data {
+				m |= extract(data[i])
+			}
+			sink = m == 1
+		}
+	})
+
+	b.Run("if break", func(b *testing.B) {
+		var anyWins bool
+		for i := 0; i < b.N; i++ {
+			anyWins = false
+			for i := range data {
+				if extract(data[i]) > 0 {
+					anyWins = true
+					break
+				}
+			}
+			if !anyWins {
+				sink = true
+			}
+		}
+	})
 }
