@@ -25,6 +25,7 @@ func NewState() State {
 	return State{
 		otherPlayer:  1,
 		activePlayer: 0,
+		cards:        [5]Card{},
 	}
 }
 
@@ -32,6 +33,7 @@ type State struct {
 	suspendedCard Card
 
 	// Player[0] is at the bottom with the dark pieces. So if the he is not the first player, the board must rotate.
+	cards        [NrOfPlayers*NrOfPlayerCards + 1]Card
 	playerCards  [NrOfPlayers * NrOfPlayerCards]Card
 	activePlayer Index
 	otherPlayer  Index
@@ -47,7 +49,33 @@ type State struct {
 	// the first move is 0, as there is no actual move. Think that every
 	// index represents the actual depth.
 	previousMoves [MaxDepth]Move
-	currentDepth  Index
+	currentDepth  Index // NOTE! this must be handled during caching (key decoding)
+}
+
+func (st *State) Reset() {
+	st.suspendedCard = 0
+	//for i := range st.cards {
+	//	st.cards[i] = 0
+	//}
+	for i := range st.playerCards {
+		st.playerCards[i] = 0
+	}
+	st.activePlayer = 0
+	st.otherPlayer = 0
+	for i := range st.board {
+		st.board[i] = 0
+	}
+	for i := range st.temples {
+		st.temples[i] = 0
+	}
+	st.generatedMovesLen = 0
+	st.hasWon = false
+	st.currentDepth = 0
+}
+
+func (st *State) cleanTrashBoards() {
+	st.board[(NrOfPieceTypes*BluePlayer)+TrashIndex] = 0
+	st.board[(NrOfPieceTypes*BrownPlayer)+TrashIndex] = 0
 }
 
 func (st *State) MovesLen() int {
@@ -182,6 +210,9 @@ func (st *State) CreateGame(cards []Card) {
 		cards = DrawCards() // random cards
 	}
 
+	for i := range cards {
+		st.cards[i] = cards[i]
+	}
 	st.otherPlayer = BrownPlayer
 	st.activePlayer = BluePlayer
 

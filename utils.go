@@ -15,3 +15,34 @@ func Merge(boards []Board) (b Board) {
 	}
 	return
 }
+
+func MakeCompactBoard(board Board) (compact Board) {
+	board = BoardMask & board // discard redundant info
+	for i, mask := range rows {
+		row := board & mask
+		row = row >> 8 // one down
+		row = row >> 1 // one right
+
+		row = row >> (uint64(i) * 8)
+
+		compact |= row << (uint64(i) * 5)
+	}
+
+	return compact
+}
+
+func CompactBoardToBitBoard(compact Board) (board Board) {
+	compact = MaskKeyBoards & compact
+
+	for i := range rows {
+		row := compact & (0x1f << (uint64(i) * 5))
+		row = row >> (uint64(i) * 5)
+
+		row = row << 1
+		row = row << 8
+		row = row << (8 * uint64(i))
+		board |= row
+	}
+
+	return board
+}

@@ -10,6 +10,7 @@ const (
 
 	StudentsIndex Index = 0
 	MasterIndex   Index = 1
+	TrashIndex    Index = 2
 
 	Student Piece = 0
 	Master  Piece = 1

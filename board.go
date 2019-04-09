@@ -56,6 +56,8 @@ const (
 	MasterBottom Board = TempleBottom
 )
 
+var rows = [...]Board{R1Mask, R2Mask, R3Mask, R4Mask, R5Mask}
+
 // FlipVertical Flip a bitboard vertically
 func FlipVertical(b Board) Board {
 	k1 := Board(0x00FF00FF00FF00FF)
