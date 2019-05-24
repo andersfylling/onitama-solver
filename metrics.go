@@ -1,16 +1,30 @@
 package onitamago
 
-func FetchMetrics(maxDepth int) {
-
-}
+func FetchMetrics(maxDepth int) {}
 
 type DepthMetric struct {
-	StudentsKilled  [2]int
-	MastersKilled   [2]int
-	TemplesTaken    [2]int
-	NonViolentMoves int
+	StudentsKilled  uint64
+	MastersKilled   uint64
+	TemplesTaken    uint64
+	NonViolentMoves uint64
 
-	depth          int
+	Depth          int
 	ActivePlayer   int
-	GeneratedMoves int
+	GeneratedMoves uint64
+}
+
+func (m *DepthMetric) Reset() {
+	m.StudentsKilled = 0
+	m.MastersKilled = 0
+	m.TemplesTaken = 0
+	m.NonViolentMoves = 0
+	m.Depth = 0
+	m.ActivePlayer = 0
+	m.GeneratedMoves = 0
+}
+func (m *DepthMetric) Increment(metric *DepthMetric) {
+	m.StudentsKilled += metric.StudentsKilled
+	m.MastersKilled += metric.MastersKilled
+	m.TemplesTaken += metric.TemplesTaken
+	m.GeneratedMoves += metric.GeneratedMoves
 }

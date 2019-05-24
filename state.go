@@ -12,7 +12,7 @@ const (
 
 	OppositePlayer = BrownPlayer
 
-	MaxDepth = 60
+	MaxDepth = 30
 )
 
 type Game struct {
@@ -50,6 +50,9 @@ type State struct {
 	// index represents the actual depth.
 	previousMoves [MaxDepth]Move
 	currentDepth  Index // NOTE! this must be handled during caching (key decoding)
+
+	// this is only activated when using the build tag "onitama_cache"
+	previousCacheKeys previousCacheKeys
 }
 
 func (st *State) Reset() {
@@ -267,6 +270,8 @@ func (st *State) UndoMove() {
 
 	st.board[st.activePlayer*NrOfPieceTypes+friendlyBoardIndex] ^= boardIndexToBoard(from) | boardIndexToBoard(to)
 	st.board[st.otherPlayer*NrOfPieceTypes+hostileBoardIndex] |= boardIndexToBoard(to)
+
+	st.removeLastCacheKey()
 }
 
 func (st *State) ApplyMove(move Move) {
@@ -289,6 +294,10 @@ func (st *State) ApplyMove(move Move) {
 	cardIndex := NrOfPlayerCards*st.activePlayer + getMoveCardIndex(move)
 	st.swapCard(cardIndex)
 	st.changePlayer()
+}
+
+func (st *State) NextPlayer() int {
+	return int((st.activePlayer + 1) % NrOfPlayers)
 }
 
 func (st *State) changePlayer() {

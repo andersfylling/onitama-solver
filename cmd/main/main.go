@@ -18,7 +18,9 @@ func perftIterative(cards []oni.Card, depth int) (leafs uint64, moves uint64, du
 	st.CreateGame(cards)
 	skipMove := ^oni.Move(0)
 
-	arr := [100000]oni.CacheKey{}
+	//metrics := make([]oni.DepthMetric, depth)
+
+	arr := [1000000]oni.CacheKey{}
 	var arrI int
 	match := func(k oni.CacheKey, i int) bool {
 		rest := len(arr) - i
@@ -35,6 +37,13 @@ func perftIterative(cards []oni.Card, depth int) (leafs uint64, moves uint64, du
 		return false
 	}
 	var matches []MatchData
+
+	ddepth := uint64(depth)
+	doCache := func(cd uint64, cb func()) {
+		if ddepth-cd >= 6 {
+			cb()
+		}
+	}
 
 	start := time.Now()
 
@@ -65,15 +74,17 @@ func perftIterative(cards []oni.Card, depth int) (leafs uint64, moves uint64, du
 		st.GenerateMoves()
 		moves += uint64(st.MovesLen())
 		var key oni.CacheKey
-		key.Encode(&st)
-		arr[arrI] = key
-		if match(key, arrI) {
-			matches = append(matches, MatchData{
-				depth: st.Depth(),
-				key:   key,
-			})
-		}
-		arrI = (arrI + 1) % len(arr)
+		doCache(st.Depth(), func() {
+			key.Encode(&st)
+			arr[arrI] = key
+			if match(key, arrI) {
+				matches = append(matches, MatchData{
+					depth: st.Depth(),
+					key:   key,
+				})
+			}
+			arrI = (arrI + 1) % len(arr)
+		})
 
 		if int(st.Depth()+1) >= depth {
 			leafs += uint64(st.MovesLen())
@@ -93,7 +104,7 @@ func perftIterative(cards []oni.Card, depth int) (leafs uint64, moves uint64, du
 		}
 	}
 
-	fmt.Println(len(matches))
+	fmt.Println("cache hits", len(matches))
 
 	return leafs, moves, time.Now().Sub(start)
 }

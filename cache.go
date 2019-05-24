@@ -12,12 +12,25 @@ const (
 type CacheKey uint64
 
 func (c *CacheKey) Encode(st *State) {
+	// only call this method after ApplyMove or the current depth of a state
+	// has been correctly set. This method sets the cache key for a state at
+	// the current depth.
 	const bi = BluePlayer * NrOfPieceTypes
 	const bsi = (BluePlayer * NrOfPieceTypes) + StudentsIndex
 	const bmi = (BluePlayer * NrOfPieceTypes) + MasterIndex
 	const bri = BrownPlayer * NrOfPieceTypes
 	const brsi = (BrownPlayer * NrOfPieceTypes) + StudentsIndex
 	const brmi = (BrownPlayer * NrOfPieceTypes) + MasterIndex
+
+	findCardID := func(card Card) uint64 {
+		for i := range st.cards {
+			if st.cards[i] == card {
+				return uint64(i)
+			}
+		}
+
+		panic("missing card")
+	}
 
 	st.cleanTrashBoards() // the trash boards hold "random" set bits
 	allBoards := Merge(st.board[:])
@@ -59,12 +72,23 @@ func (c *CacheKey) Encode(st *State) {
 	}
 
 	var cards uint64
-	for i := range st.playerCards {
-		for j := range st.cards {
-			if st.playerCards[i] == st.cards[j] {
-				cards |= uint64(j) << (uint64(i) * 4)
-			}
-		}
+
+	// ordering of the players cards does not matter
+	// so use the lowest index first
+	cardIDs := []uint64{
+		findCardID(st.playerCards[0]),
+		findCardID(st.playerCards[1]),
+		findCardID(st.playerCards[2]),
+		findCardID(st.playerCards[3]),
+	}
+	if cardIDs[0] > cardIDs[1] {
+		cardIDs[0], cardIDs[1] = cardIDs[1], cardIDs[0]
+	}
+	if cardIDs[2] > cardIDs[3] {
+		cardIDs[2], cardIDs[3] = cardIDs[3], cardIDs[2]
+	}
+	for i := range cardIDs {
+		cards |= cardIDs[i] << 4 * uint64(i)
 	}
 
 	var offset uint64
@@ -84,6 +108,8 @@ func (c *CacheKey) Encode(st *State) {
 	offset += uint64(4 * len(st.playerCards))
 
 	*c = CacheKey(holder)
+
+	st.setCacheKey(*c)
 }
 
 func (c *CacheKey) Decode(st *State) {
@@ -154,7 +180,6 @@ func (c *CacheKey) Decode(st *State) {
 
 		if !used {
 			st.suspendedCard = st.cards[i]
-			break
 		}
 	}
 }
