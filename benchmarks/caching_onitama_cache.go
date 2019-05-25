@@ -2,10 +2,13 @@
 
 package main
 
-import oni "github.com/andersfylling/onitamago"
+import (
+	"fmt"
+	oni "github.com/andersfylling/onitamago"
+)
 
 func cacheableDepth(targetDepth, currentDepth uint64) bool {
-	return targetDepth-currentDepth > 6
+	return targetDepth-currentDepth >= 6
 }
 
 type cacheInfo struct {
@@ -82,12 +85,15 @@ func (c *onitamaCache) addMetrics(targetDepth, currentDepth uint64, index int, m
 			continue
 		}
 
-		mdepth := currentDepth - c.entries[i].depth
+		mdepth := int(currentDepth - c.entries[i].depth)
+		if mdepth < 0 || mdepth > len(c.entries[i].metrics) {
+			fmt.Println(len(c.entries[i].metrics), mdepth, c.entries[i].depth, currentDepth)
+		}
 		c.entries[i].metrics[mdepth].Increment(&metric)
 	}
 }
 
-func doCache(targetDepth, currentDepth uint64, cb func()) {
+func buildtag_onitama_cache(targetDepth, currentDepth uint64, cb func()) {
 	if cacheableDepth(targetDepth, currentDepth) {
 		cb()
 	}

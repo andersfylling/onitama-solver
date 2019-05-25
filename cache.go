@@ -1,7 +1,15 @@
 package onitamago
 
+import (
+	"strconv"
+)
+
 const (
 	MaskKeyBoards uint64 = 0x1ffffff
+)
+
+var (
+	zeros = []byte("0000000000000000000000000000000000000000000000000000000000000000")
 )
 
 // CacheKey represents all the pieces, current player, relative cards.
@@ -10,6 +18,39 @@ const (
 // Note! this will not function for states with missing masters and as such should not
 //  be calculated on leaf nodes.
 type CacheKey uint64
+
+func (c *CacheKey) String() string {
+	binary := []byte(strconv.FormatUint(uint64(*c), 2))
+	binary = append(zeros[:64-len(binary)], binary...)
+
+	merge := func(slices [][]byte, delim byte) (b []byte) {
+		for i := range slices {
+			b = append(b, slices[i]...)
+			b = append(b, delim)
+		}
+
+		return b[:len(b)-1]
+	}
+
+	// cards
+	cards := [][]byte{
+		binary[8:11],
+		binary[11:14],
+		binary[14:17],
+		binary[17:20],
+	}
+	segments := [][]byte{
+		binary[0:8],                           // unused
+		merge(cards, '.'),                     // player cards
+		binary[64-25-10-4-4-1 : 64-25-10-4-4], // active player
+		binary[64-25-10-4-4 : 64-25-10-4],     // brown master
+		binary[64-25-10-4 : 64-25-10],         // blue master
+		binary[64-25-10 : 64-25],              // blue students, relative positions
+		binary[64-25:],                        // pieces
+	}
+
+	return string(merge(segments, '|'))
+}
 
 func (c *CacheKey) Encode(st *State) {
 	// only call this method after ApplyMove or the current depth of a state
@@ -74,7 +115,7 @@ func (c *CacheKey) Encode(st *State) {
 	var cards uint64
 
 	// ordering of the players cards does not matter
-	// so use the lowest index first
+	// so use the lowest index first to get more cache hits
 	cardIDs := []uint64{
 		findCardID(st.playerCards[0]),
 		findCardID(st.playerCards[1]),
@@ -87,9 +128,10 @@ func (c *CacheKey) Encode(st *State) {
 	if cardIDs[2] > cardIDs[3] {
 		cardIDs[2], cardIDs[3] = cardIDs[3], cardIDs[2]
 	}
-	for i := range cardIDs {
-		cards |= cardIDs[i] << 4 * uint64(i)
-	}
+	cards |= cardIDs[0]
+	cards |= cardIDs[1] << 3
+	cards |= cardIDs[2] << 6
+	cards |= cardIDs[3] << 9
 
 	var offset uint64
 	holder := compact << offset
@@ -105,10 +147,9 @@ func (c *CacheKey) Encode(st *State) {
 	}
 	offset += 1
 	holder |= cards << offset
-	offset += uint64(4 * len(st.playerCards))
+	offset += uint64(3 * len(st.playerCards))
 
 	*c = CacheKey(holder)
-
 	st.setCacheKey(*c)
 }
 

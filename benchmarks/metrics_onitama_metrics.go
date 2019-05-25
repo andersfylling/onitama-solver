@@ -2,6 +2,6 @@
 
 package main
 
-func doMetrics(cb func()) {
+func buildtag_onitama_metrics(cb func()) {
 	cb()
 }

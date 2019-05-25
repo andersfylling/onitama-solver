@@ -41,7 +41,14 @@ func BenchmarkPERFT(b *testing.B) {
 }
 
 func TestFetchMetrics(t *testing.T) {
-	//return
+	skip := true
+	buildtag_onitama_metrics(func() {
+		skip = false
+	})
+	if skip {
+		return
+	}
+
 	cards := []oni.Card{
 		oni.Frog, oni.Eel,
 		oni.Dragon, oni.Crab,
@@ -73,6 +80,31 @@ func TestFetchMetrics(t *testing.T) {
 	b.Write([]byte("}\n"))
 
 	fmt.Print(b.String())
+}
+
+func TestPERFTCacheAcc(t *testing.T) {
+	skip := true
+	buildtag_onitama_metrics(func() {
+		skip = false
+	})
+	if skip {
+		return
+	}
+
+	cards := []oni.Card{
+		oni.Frog, oni.Eel,
+		oni.Dragon, oni.Crab,
+		oni.Tiger,
+	}
+
+	for depth := 1; depth <= 9; depth++ {
+		// sequential only!
+		m, leafs, _, _ := perft(cards, depth)
+		mleafs := m[len(m)-1].GeneratedMoves
+		if leafs != mleafs {
+			t.Errorf("PERFT(%d) diff in number of leafs. Got %d, wants %d", depth, mleafs, leafs)
+		}
+	}
 }
 
 var vanilla_metrics = [][]int{
@@ -217,11 +249,11 @@ var cache_metrics = [][]int{
 		88,
 		992,
 		11154,
-		127878,
-		1192006,
-		13007030,
-		130994968,
-		1403905796,
+		127475,
+		1197326,
+		13067728,
+		131858386,
+		1417272353,
 	},
 }
 

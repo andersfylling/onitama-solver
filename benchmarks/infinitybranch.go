@@ -2,4 +2,4 @@
 
 package main
 
-func doInfinityBranchCheck(cb func()) {}
+func buildtag_onitama_noinfinity(cb func()) {}

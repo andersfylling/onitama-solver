@@ -27,4 +27,8 @@ func (m *DepthMetric) Increment(metric *DepthMetric) {
 	m.MastersKilled += metric.MastersKilled
 	m.TemplesTaken += metric.TemplesTaken
 	m.GeneratedMoves += metric.GeneratedMoves
+
+	// TODO: do not set these for every update..
+	m.Depth = metric.Depth
+	m.ActivePlayer = metric.ActivePlayer
 }

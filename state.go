@@ -306,7 +306,5 @@ func (st *State) changePlayer() {
 }
 
 func (st *State) swapCard(cardIndex Index) {
-	tmp := st.suspendedCard
-	st.suspendedCard = st.playerCards[cardIndex]
-	st.playerCards[cardIndex] = tmp
+	st.suspendedCard, st.playerCards[cardIndex] = st.playerCards[cardIndex], st.suspendedCard
 }

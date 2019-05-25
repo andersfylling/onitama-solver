@@ -3,6 +3,10 @@ package onitamago
 type Move = uint16
 type MoveAction = Board
 
+// TypeUndoMove can be used to signify the state should undo the current move
+// may it be to go backwards in a game tree or for other reasons.
+const MoveUndo = ^Move(0)
+
 const MovePositionMask Move = 0x3f
 const MoveMaskTo Move = MovePositionMask << 0
 const MoveMaskFrom Move = MovePositionMask << 6
