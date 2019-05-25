@@ -1,6 +1,7 @@
 package onitamago
 
 import (
+	"math/bits"
 	"strconv"
 )
 
@@ -79,7 +80,7 @@ func (c *CacheKey) Encode(st *State) {
 
 	var bluePieces Board // 10 bits, each bit represents the sequence of blue pos in compact
 	blueBoards := Merge(st.board[bi : bi+NrOfPieceTypes])
-	brownBoards := allBoards ^ blueBoards
+	//brownBoards := allBoards ^ blueBoards
 	var pos uint64
 	for i := LSB(allBoards); i != 64; i = NLSB(&allBoards, i) {
 		if pieceAtBoardIndex(blueBoards, i) {
@@ -88,29 +89,14 @@ func (c *CacheKey) Encode(st *State) {
 		pos++
 	}
 
-	var blueMaster Board // <0, 4>, bb
-	pos = 0
-	for i := LSB(blueBoards); i != 64; i = NLSB(&blueBoards, i) {
-		if pieceAtBoardIndex(st.board[bmi], i) {
-			if pos > 0 {
-				blueMaster = 1 << (pos - 1)
-			}
-			break
-		}
-		pos++
+	findOffset := func(master Board, students Board) uint64 {
+		studentsBeforeMaster := (master - 1) & students
+		// github.com/tmthrgd/go-popcount.Count64(..) was slower: 69s -> 78s
+		return uint64(bits.OnesCount64(studentsBeforeMaster))
 	}
 
-	var brownMaster Board // <0, 4>
-	pos = 0
-	for i := LSB(brownBoards); i != 64; i = NLSB(&brownBoards, i) {
-		if pieceAtBoardIndex(st.board[brmi], i) {
-			if pos > 0 {
-				brownMaster = 1 << (pos - 1)
-			}
-			break
-		}
-		pos++
-	}
+	blueMaster := uint64(1) << findOffset(st.board[bmi], st.board[bsi])
+	brownMaster := uint64(1) << findOffset(st.board[brmi], st.board[brsi])
 
 	var cards uint64
 

@@ -98,7 +98,7 @@ func perft(cards []oni.Card, depth int) (metrics []oni.DepthMetric, leafs uint64
 			}
 
 			if ms, ready, ok := cache.match(key, st.Depth()); ok {
-				fmt.Println(key.String())
+				fmt.Println(st.Depth(), key.String())
 				if !ready {
 					fmt.Println(st.IsParentCacheKey(key), "was not ready..")
 					return
