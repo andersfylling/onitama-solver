@@ -7,7 +7,7 @@ import (
 )
 
 func cacheableDepth(targetDepth, currentDepth uint64) bool {
-	return targetDepth-currentDepth > 3
+	return targetDepth-currentDepth > 6
 }
 
 type cacheInfo struct {

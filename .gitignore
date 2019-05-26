@@ -12,3 +12,5 @@
 *.out
 
 .idea
+benchmarks/benchmarks
+benchmarks/perft_cache
