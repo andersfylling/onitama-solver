@@ -1,6 +1,6 @@
 // +build !onitama_cache
 
-package main
+package perft
 
 import oni "github.com/andersfylling/onitamago"
 

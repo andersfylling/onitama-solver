@@ -1,0 +1,25 @@
+goos: linux
+goarch: amd64
+pkg: github.com/andersfylling/onitamago/benchmarks/cache
+BenchmarkCacheKey_Encode-8   	30000000	        49.6 ns/op	       0 B/op	       0 allocs/op
+BenchmarkCacheKey_Encode-8   	30000000	        50.0 ns/op	       0 B/op	       0 allocs/op
+BenchmarkCacheKey_Encode-8   	30000000	        49.7 ns/op	       0 B/op	       0 allocs/op
+BenchmarkCacheKey_Encode-8   	30000000	        49.4 ns/op	       0 B/op	       0 allocs/op
+BenchmarkCacheKey_Encode-8   	30000000	        49.7 ns/op	       0 B/op	       0 allocs/op
+BenchmarkCacheKey_Encode-8   	30000000	        49.8 ns/op	       0 B/op	       0 allocs/op
+BenchmarkCacheKey_Encode-8   	30000000	        50.8 ns/op	       0 B/op	       0 allocs/op
+BenchmarkCacheKey_Encode-8   	30000000	        50.2 ns/op	       0 B/op	       0 allocs/op
+BenchmarkCacheKey_Encode-8   	30000000	        50.3 ns/op	       0 B/op	       0 allocs/op
+BenchmarkCacheKey_Encode-8   	30000000	        50.5 ns/op	       0 B/op	       0 allocs/op
+BenchmarkCacheKey_Encode-8   	30000000	        50.4 ns/op	       0 B/op	       0 allocs/op
+BenchmarkCacheKey_Encode-8   	30000000	        51.3 ns/op	       0 B/op	       0 allocs/op
+BenchmarkCacheKey_Encode-8   	30000000	        50.7 ns/op	       0 B/op	       0 allocs/op
+BenchmarkCacheKey_Encode-8   	30000000	        50.9 ns/op	       0 B/op	       0 allocs/op
+BenchmarkCacheKey_Encode-8   	30000000	        50.1 ns/op	       0 B/op	       0 allocs/op
+BenchmarkCacheKey_Encode-8   	30000000	        49.8 ns/op	       0 B/op	       0 allocs/op
+BenchmarkCacheKey_Encode-8   	30000000	        49.6 ns/op	       0 B/op	       0 allocs/op
+BenchmarkCacheKey_Encode-8   	30000000	        49.7 ns/op	       0 B/op	       0 allocs/op
+BenchmarkCacheKey_Encode-8   	30000000	        49.7 ns/op	       0 B/op	       0 allocs/op
+BenchmarkCacheKey_Encode-8   	30000000	        49.7 ns/op	       0 B/op	       0 allocs/op
+PASS
+ok  	github.com/andersfylling/onitamago/benchmarks/cache	31.128s

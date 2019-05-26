@@ -1,14 +1,13 @@
 // +build onitama_cache
 
-package main
+package perft
 
 import (
-	"fmt"
 	oni "github.com/andersfylling/onitamago"
 )
 
 func cacheableDepth(targetDepth, currentDepth uint64) bool {
-	return targetDepth-currentDepth >= 6
+	return targetDepth-currentDepth > 3
 }
 
 type cacheInfo struct {
@@ -80,15 +79,11 @@ func (c *onitamaCache) addMetrics(targetDepth, currentDepth uint64, index int, m
 		}
 
 		if c.entries[i].StopAfterIndex > index {
-			// failsafe
 			c.entries[i].Ready = true
 			continue
 		}
 
 		mdepth := int(currentDepth - c.entries[i].depth)
-		if mdepth < 0 || mdepth > len(c.entries[i].metrics) {
-			fmt.Println(len(c.entries[i].metrics), mdepth, c.entries[i].depth, currentDepth)
-		}
 		c.entries[i].metrics[mdepth].Increment(&metric)
 	}
 }

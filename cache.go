@@ -35,13 +35,12 @@ func (c *CacheKey) String() string {
 
 	// cards
 	cards := [][]byte{
-		binary[8:11],
-		binary[11:14],
-		binary[14:17],
-		binary[17:20],
+		binary[11:14], // suspended
+		binary[14:17], // blue 2
+		binary[17:20], // blue 1
 	}
 	segments := [][]byte{
-		binary[0:8],                           // unused
+		binary[0:11],                          // unused
 		merge(cards, '.'),                     // player cards
 		binary[64-25-10-4-4-1 : 64-25-10-4-4], // active player
 		binary[64-25-10-4-4 : 64-25-10-4],     // brown master
@@ -74,15 +73,18 @@ func (c *CacheKey) Encode(st *State) {
 		panic("missing card")
 	}
 
-	st.cleanTrashBoards() // the trash boards hold "random" set bits
-	allBoards := Merge(st.board[:])
+	allBoards := st.board[bsi] | st.board[bmi] | st.board[brsi] | st.board[brmi]
 	compact := MakeCompactBoard(allBoards)
 
 	var bluePieces Board // 10 bits, each bit represents the sequence of blue pos in compact
-	blueBoards := Merge(st.board[bi : bi+NrOfPieceTypes])
+	blueBoards := st.board[bsi] | st.board[bmi]
 	//brownBoards := allBoards ^ blueBoards
+
+	highestBlue := uint64(1) << uint64(63-bits.LeadingZeros64(blueBoards))
+	blueMask := highestBlue | (highestBlue - 1)
+	piecesOfInterest := allBoards & blueMask
 	var pos uint64
-	for i := LSB(allBoards); i != 64; i = NLSB(&allBoards, i) {
+	for i := LSB(piecesOfInterest); i != 64; i = NLSB(&piecesOfInterest, i) {
 		if pieceAtBoardIndex(blueBoards, i) {
 			bluePieces |= 1 << pos
 		}
@@ -102,22 +104,17 @@ func (c *CacheKey) Encode(st *State) {
 
 	// ordering of the players cards does not matter
 	// so use the lowest index first to get more cache hits
-	cardIDs := []uint64{
+	cardIDs := [...]uint64{
 		findCardID(st.playerCards[0]),
 		findCardID(st.playerCards[1]),
-		findCardID(st.playerCards[2]),
-		findCardID(st.playerCards[3]),
+		findCardID(st.suspendedCard),
 	}
 	if cardIDs[0] > cardIDs[1] {
 		cardIDs[0], cardIDs[1] = cardIDs[1], cardIDs[0]
 	}
-	if cardIDs[2] > cardIDs[3] {
-		cardIDs[2], cardIDs[3] = cardIDs[3], cardIDs[2]
-	}
 	cards |= cardIDs[0]
 	cards |= cardIDs[1] << 3
 	cards |= cardIDs[2] << 6
-	cards |= cardIDs[3] << 9
 
 	var offset uint64
 	holder := compact << offset

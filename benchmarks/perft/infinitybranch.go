@@ -1,5 +1,5 @@
 // +build !onitama_noinfinity
 
-package main
+package perft
 
 func buildtag_onitama_noinfinity(cb func()) {}

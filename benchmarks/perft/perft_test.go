@@ -1,4 +1,4 @@
-package main
+package perft
 
 import (
 	"fmt"
@@ -26,12 +26,12 @@ func BenchmarkPERFT(b *testing.B) {
 	}
 	durations := []time.Duration{}
 
-	for depth := 1; depth <= 10; depth++ {
+	for depth := 10; depth <= 10; depth++ {
 		// sequential only!
 		title := fmt.Sprintf("depth(%d)", depth)
 		b.Run(title, func(b *testing.B) {
 			for i := 0; i < b.N; i++ {
-				_, _, _, d := perft(cards, depth)
+				_, _, _, d := Perft(cards, depth)
 				durations = append(durations, d)
 			}
 		})
@@ -59,7 +59,7 @@ func TestFetchMetrics(t *testing.T) {
 	base := 1
 	for depth := base; depth <= 9; depth++ {
 		// sequential only!
-		m, _, _, _ := perft(cards, depth)
+		m, _, _, _ := Perft(cards, depth)
 		metrics = append(metrics, m)
 		var moves uint64
 		if len(m) > 0 {
@@ -71,7 +71,7 @@ func TestFetchMetrics(t *testing.T) {
 	b := strings.Builder{}
 	b.Write([]byte(" = [][]int{\n"))
 	for i := range metrics {
-		b.Write([]byte("\t{ // perft(" + strconv.Itoa(i+base) + ") \n"))
+		b.Write([]byte("\t{ // Perft(" + strconv.Itoa(i+base) + ") \n"))
 		for j := range metrics[i] {
 			b.WriteString("\t\t" + strconv.FormatUint(metrics[i][j].GeneratedMoves, 10) + ",\n")
 		}
@@ -84,8 +84,12 @@ func TestFetchMetrics(t *testing.T) {
 
 func TestPERFTCacheAcc(t *testing.T) {
 	skip := true
+	var showCachePrune bool
 	buildtag_onitama_metrics(func() {
 		skip = false
+		buildtag_onitama_cache(100, 0, func() {
+			showCachePrune = true
+		})
 	})
 	if skip {
 		return
@@ -97,40 +101,42 @@ func TestPERFTCacheAcc(t *testing.T) {
 		oni.Tiger,
 	}
 
-	for depth := 1; depth <= 9; depth++ {
+	for depth := 9; depth <= 9; depth++ {
 		// sequential only!
-		m, leafs, _, _ := perft(cards, depth)
+		m, leafs, _, _ := Perft(cards, depth)
 		mleafs := m[len(m)-1].GeneratedMoves
-		if leafs != mleafs {
-			t.Errorf("PERFT(%d) diff in number of leafs. Got %d, wants %d", depth, mleafs, leafs)
+		fmt.Println(depth, leafs)
+
+		if showCachePrune {
+			fmt.Println("cache pruned", mleafs-leafs)
 		}
 	}
 }
 
 var vanilla_metrics = [][]int{
-	{ // perft(1)
+	{ // Perft(1)
 		0,
 		11,
 	},
-	{ // perft(2)
+	{ // Perft(2)
 		0,
 		11,
 		88,
 	},
-	{ // perft(3)
+	{ // Perft(3)
 		0,
 		11,
 		88,
 		992,
 	},
-	{ // perft(4)
+	{ // Perft(4)
 		0,
 		11,
 		88,
 		992,
 		11159,
 	},
-	{ // perft(5)
+	{ // Perft(5)
 		0,
 		11,
 		88,
@@ -138,7 +144,7 @@ var vanilla_metrics = [][]int{
 		11159,
 		126293,
 	},
-	{ // perft(6)
+	{ // Perft(6)
 		0,
 		11,
 		88,
@@ -147,7 +153,7 @@ var vanilla_metrics = [][]int{
 		126293,
 		1207255,
 	},
-	{ // perft(7)
+	{ // Perft(7)
 		0,
 		11,
 		88,
@@ -157,7 +163,7 @@ var vanilla_metrics = [][]int{
 		1207255,
 		13172583,
 	},
-	{ // perft(8)
+	{ // Perft(8)
 		0,
 		11,
 		88,
@@ -168,7 +174,7 @@ var vanilla_metrics = [][]int{
 		13172583,
 		133192301,
 	},
-	{ // perft(9)
+	{ // Perft(9)
 		0,
 		11,
 		88,
@@ -181,31 +187,30 @@ var vanilla_metrics = [][]int{
 		1438696527,
 	},
 }
-
 var cache_metrics = [][]int{
-	{ // perft(1)
+	{ // Perft(1)
 		0,
 		11,
 	},
-	{ // perft(2)
+	{ // Perft(2)
 		0,
 		11,
 		88,
 	},
-	{ // perft(3)
+	{ // Perft(3)
 		0,
 		11,
 		88,
 		992,
 	},
-	{ // perft(4)
+	{ // Perft(4)
 		0,
 		11,
 		88,
 		992,
 		11159,
 	},
-	{ // perft(5)
+	{ // Perft(5)
 		0,
 		11,
 		88,
@@ -213,7 +218,7 @@ var cache_metrics = [][]int{
 		11159,
 		126293,
 	},
-	{ // perft(6)
+	{ // Perft(6)
 		0,
 		11,
 		88,
@@ -222,7 +227,7 @@ var cache_metrics = [][]int{
 		126293,
 		1207255,
 	},
-	{ // perft(7)
+	{ // Perft(7)
 		0,
 		11,
 		88,
@@ -232,7 +237,7 @@ var cache_metrics = [][]int{
 		1207255,
 		13172583,
 	},
-	{ // perft(8)
+	{ // Perft(8)
 		0,
 		11,
 		88,
@@ -243,7 +248,7 @@ var cache_metrics = [][]int{
 		13172583,
 		133192301,
 	},
-	{ // perft(9)
+	{ // Perft(9)
 		0,
 		11,
 		88,
@@ -270,7 +275,7 @@ func TestCompareMetricsToCache(t *testing.T) {
 		for j := range vanilla_metrics[i] {
 			a, b := vanilla_metrics[i][j], cache_metrics[i][j]
 			if a != b {
-				t.Errorf("cache and vanilla for perft(%d) at depth %d was different. Cache got %d, expected %d. diff %d", i+1, j, b, a, a-b)
+				t.Errorf("cache and vanilla for Perft(%d) at depth %d was different. Cache got %d, expected %d. diff %d", i+1, j, b, a, a-b)
 			}
 		}
 	}

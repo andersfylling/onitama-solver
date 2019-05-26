@@ -1,5 +1,5 @@
 // +build !onitama_metrics
 
-package main
+package perft
 
 func buildtag_onitama_metrics(cb func()) {}
