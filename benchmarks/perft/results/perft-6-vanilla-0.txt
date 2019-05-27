@@ -1,0 +1,16 @@
+goos: linux
+goarch: amd64
+pkg: github.com/andersfylling/onitamago/benchmarks/perft
+BenchmarkPerft/depth(6)-8         	      50	  28459465 ns/op
+BenchmarkPerft/depth(6)-8         	      50	  28512158 ns/op
+BenchmarkPerft/depth(6)-8         	      50	  28432447 ns/op
+BenchmarkPerft/depth(6)-8         	      50	  28348042 ns/op
+BenchmarkPerft/depth(6)-8         	      50	  28689791 ns/op
+BenchmarkPerft/depth(6)-8         	      50	  28752569 ns/op
+BenchmarkPerft/depth(6)-8         	      50	  28503022 ns/op
+BenchmarkPerft/depth(6)-8         	      50	  28386885 ns/op
+BenchmarkPerft/depth(6)-8         	      50	  28493926 ns/op
+BenchmarkPerft/depth(6)-8         	      50	  28573841 ns/op
+duration 28.444071ms
+PASS
+ok  	github.com/andersfylling/onitamago/benchmarks/perft	17.173s

@@ -42,3 +42,11 @@ func TestCacheKey_Decode_Encode(t *testing.T) {
 	key.Decode(&st)
 	fmt.Println(st)
 }
+
+func TestCacheKey_Encode(t *testing.T) {
+	key := CacheKey(7534804192330777627)
+	expects := "011.010.001|0|01000|10000|0000011111|0111101000000000000000010000011011"
+	if key.String() != expects {
+		t.Error("\n :::" + key.String() + "\n  =>" + expects)
+	}
+}

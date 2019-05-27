@@ -1,16 +1,12 @@
 package onitamago
 
 import (
+	"fmt"
 	"math/bits"
-	"strconv"
 )
 
 const (
 	MaskKeyBoards uint64 = 0x1ffffff
-)
-
-var (
-	zeros = []byte("0000000000000000000000000000000000000000000000000000000000000000")
 )
 
 // CacheKey represents all the pieces, current player, relative cards.
@@ -21,10 +17,10 @@ var (
 type CacheKey uint64
 
 func (c *CacheKey) String() string {
-	binary := []byte(strconv.FormatUint(uint64(*c), 2))
-	binary = append(zeros[:64-len(binary)], binary...)
+	binary := []byte(fmt.Sprintf("%064b", *c))
 
 	merge := func(slices [][]byte, delim byte) (b []byte) {
+		b = make([]byte, 0, 94)
 		for i := range slices {
 			b = append(b, slices[i]...)
 			b = append(b, delim)
@@ -35,18 +31,17 @@ func (c *CacheKey) String() string {
 
 	// cards
 	cards := [][]byte{
-		binary[11:14], // suspended
-		binary[14:17], // blue 2
-		binary[17:20], // blue 1
+		binary[0:3], // suspended
+		binary[3:6], // blue 2
+		binary[6:9], // blue 1
 	}
 	segments := [][]byte{
-		binary[0:11],                          // unused
 		merge(cards, '.'),                     // player cards
-		binary[64-25-10-4-4-1 : 64-25-10-4-4], // active player
-		binary[64-25-10-4-4 : 64-25-10-4],     // brown master
-		binary[64-25-10-4 : 64-25-10],         // blue master
-		binary[64-25-10 : 64-25],              // blue students, relative positions
-		binary[64-25:],                        // pieces
+		binary[64-34-10-5-5-1 : 64-34-10-5-5], // active player
+		binary[64-34-10-5-5 : 64-34-10-5],     // brown master
+		binary[64-34-10-5 : 64-34-10],         // blue master
+		binary[64-34-10 : 64-34],              // blue students, relative positions
+		binary[64-34:],                        // pieces
 	}
 
 	return string(merge(segments, '|'))
@@ -73,13 +68,11 @@ func (c *CacheKey) Encode(st *State) {
 		panic("missing card")
 	}
 
-	allBoards := st.board[bsi] | st.board[bmi] | st.board[brsi] | st.board[brmi]
-	compact := MakeCompactBoard(allBoards)
+	blueBoards := st.board[bsi] | st.board[bmi]
+	allBoards := blueBoards | st.board[brsi] | st.board[brmi]
+	compact := MakeSemiCompactBoard(allBoards)
 
 	var bluePieces Board // 10 bits, each bit represents the sequence of blue pos in compact
-	blueBoards := st.board[bsi] | st.board[bmi]
-	//brownBoards := allBoards ^ blueBoards
-
 	highestBlue := uint64(1) << uint64(63-bits.LeadingZeros64(blueBoards))
 	blueMask := highestBlue | (highestBlue - 1)
 	piecesOfInterest := allBoards & blueMask
@@ -117,20 +110,18 @@ func (c *CacheKey) Encode(st *State) {
 	cards |= cardIDs[2] << 6
 
 	var offset uint64
-	holder := compact << offset
-	offset += 25
+	holder := compact //<< offset
+	offset += 34
 	holder |= bluePieces << offset
 	offset += 10
 	holder |= blueMaster << offset
-	offset += 4
+	offset += 5
 	holder |= brownMaster << offset
-	offset += 4
-	if st.activePlayer == BluePlayer {
-		holder |= 1 << offset
-	}
+	offset += 5
+	holder |= st.activePlayer << offset
 	offset += 1
 	holder |= cards << offset
-	offset += uint64(3 * len(st.playerCards))
+	//offset += uint64(3 * len(st.playerCards))
 
 	*c = CacheKey(holder)
 	st.setCacheKey(*c)

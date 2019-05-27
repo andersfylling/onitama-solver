@@ -16,6 +16,7 @@ func Merge(boards []Board) (b Board) {
 	return
 }
 
+// MakeCompactBoard takes a bitboard and compresses it into 25 bits
 func MakeCompactBoard(board Board) (compact Board) {
 	board = BoardMask & board // discard redundant info
 	for i, mask := range rows {
@@ -29,6 +30,24 @@ func MakeCompactBoard(board Board) (compact Board) {
 	}
 
 	return compact
+}
+
+// MakeCompactBoard takes a bitboard and compresses it into 25 bits using ASM
+func MakeCompactBoardFast(board Board) Board {
+	// TODO: SIMD
+	return MakeCompactBoard(board)
+}
+
+// MakeSemiCompactBoard takes a bitboard and compresses it into 34 bits
+func MakeSemiCompactBoard(board Board) Board {
+	const down uint64 = 8
+	const right uint64 = 1
+
+	board = BoardMask & board // discard redundant info
+	board = board >> (down + right)
+	board = board | (board & 0x1f00000000)
+
+	return (board & 0x1f1f1f1f) | ((board & 0x1f00000000) >> 3)
 }
 
 func CompactBoardToBitBoard(compact Board) (board Board) {

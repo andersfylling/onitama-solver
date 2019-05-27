@@ -1,0 +1,104 @@
+goos: linux
+goarch: amd64
+pkg: github.com/andersfylling/onitamago/benchmarks/perft
+BenchmarkPerft/depth(9)-8         	       1	88476976532 ns/op
+BenchmarkPerft/depth(9)-8         	       1	90320089316 ns/op
+BenchmarkPerft/depth(9)-8         	       1	89445210809 ns/op
+BenchmarkPerft/depth(9)-8         	       1	90391959091 ns/op
+BenchmarkPerft/depth(9)-8         	       1	90443731043 ns/op
+BenchmarkPerft/depth(9)-8         	       1	90709902162 ns/op
+BenchmarkPerft/depth(9)-8         	SIGQUIT: quit
+PC=0x459661 m=0 sigcode=0
+
+goroutine 0 [idle]:
+runtime.futex(0x63c168, 0x80, 0x0, 0x0, 0x0, 0xc000000000, 0x0, 0x0, 0x7ffee7e412d8, 0x40a1f1, ...)
+	/usr/lib/go/src/runtime/sys_linux_amd64.s:535 +0x21
+runtime.futexsleep(0x63c168, 0x100000000, 0xffffffffffffffff)
+	/usr/lib/go/src/runtime/os_linux.go:46 +0x4b
+runtime.notesleep(0x63c168)
+	/usr/lib/go/src/runtime/lock_futex.go:151 +0xa1
+runtime.stopm()
+	/usr/lib/go/src/runtime/proc.go:1936 +0xc1
+runtime.findrunnable(0xc00002f900, 0x0)
+	/usr/lib/go/src/runtime/proc.go:2399 +0x54a
+runtime.schedule()
+	/usr/lib/go/src/runtime/proc.go:2525 +0x21c
+runtime.park_m(0xc0000d4180)
+	/usr/lib/go/src/runtime/proc.go:2605 +0xa1
+runtime.mcall(0x0)
+	/usr/lib/go/src/runtime/asm_amd64.s:299 +0x5b
+
+goroutine 1 [chan receive, 10 minutes]:
+testing.(*B).run1(0xc000096000, 0xc000096000)
+	/usr/lib/go/src/testing/benchmark.go:251 +0x9e
+testing.(*B).Run(0xc000096340, 0x54144d, 0xe, 0x548cd8, 0x4ad000)
+	/usr/lib/go/src/testing/benchmark.go:553 +0x2a3
+testing.runBenchmarks.func1(0xc000096340)
+	/usr/lib/go/src/testing/benchmark.go:455 +0x78
+testing.(*B).runN(0xc000096340, 0x1)
+	/usr/lib/go/src/testing/benchmark.go:176 +0xb3
+testing.runBenchmarks(0x547dee, 0x33, 0xc00000c0a0, 0x634400, 0x2, 0x2, 0x60)
+	/usr/lib/go/src/testing/benchmark.go:461 +0x39f
+testing.(*M).Run(0xc0000aa000, 0x0)
+	/usr/lib/go/src/testing/testing.go:1078 +0x413
+main.main()
+	_testmain.go:50 +0x13e
+
+goroutine 81 [chan receive, 2 minutes]:
+testing.(*B).run1(0xc000096820, 0xc000096820)
+	/usr/lib/go/src/testing/benchmark.go:251 +0x9e
+testing.(*benchContext).processBench(0xc00000c0c0, 0xc000096820)
+	/usr/lib/go/src/testing/benchmark.go:484 +0x2c2
+testing.(*B).run(0xc0000964e0)
+	/usr/lib/go/src/testing/benchmark.go:286 +0x74
+testing.(*B).Run(0xc000096000, 0xc000014160, 0x8, 0xc0000102d0, 0x0)
+	/usr/lib/go/src/testing/benchmark.go:554 +0x33d
+github.com/andersfylling/onitamago/benchmarks/perft.BenchmarkPerft(0xc000096000)
+	/home/anders/dev/onitamago/benchmarks/perft/perft_test.go:42 +0x84c
+testing.(*B).runN(0xc000096000, 0x1)
+	/usr/lib/go/src/testing/benchmark.go:176 +0xb3
+testing.(*B).run1.func1(0xc000096000)
+	/usr/lib/go/src/testing/benchmark.go:249 +0x5a
+created by testing.(*B).run1
+	/usr/lib/go/src/testing/benchmark.go:242 +0x7d
+
+goroutine 90 [runnable]:
+github.com/andersfylling/onitamago.generateMoves(0xc000520b20, 0x48db)
+	/home/anders/dev/onitamago/movegen.go:11 +0x2c4
+github.com/andersfylling/onitamago.(*State).GenerateMoves(...)
+	/home/anders/dev/onitamago/state.go:208
+github.com/andersfylling/onitamago/benchmarks/perft.Perft(0xc00001a240, 0x5, 0x5, 0x9, 0x0, 0x0, 0x0, 0x2663d983, 0x3c7d707d759, 0xc000043f60)
+	/home/anders/dev/onitamago/benchmarks/perft/perft.go:125 +0x4fc
+github.com/andersfylling/onitamago/benchmarks/perft.BenchmarkPerft.func1(0xc000096820)
+	/home/anders/dev/onitamago/benchmarks/perft/perft_test.go:44 +0x65
+testing.(*B).runN(0xc000096820, 0x1)
+	/usr/lib/go/src/testing/benchmark.go:176 +0xb3
+testing.(*B).run1.func1(0xc000096820)
+	/usr/lib/go/src/testing/benchmark.go:249 +0x5a
+created by testing.(*B).run1
+	/usr/lib/go/src/testing/benchmark.go:242 +0x7d
+
+rax    0xca
+rbx    0x63c020
+rcx    0x459663
+rdx    0x0
+rdi    0x63c168
+rsi    0x80
+rbp    0x7ffee7e412a0
+rsp    0x7ffee7e41258
+r8     0x0
+r9     0x0
+r10    0x0
+r11    0x286
+r12    0x55
+r13    0x6283c0
+r14    0x0
+r15    0x0
+rip    0x459661
+rflags 0x286
+cs     0x33
+fs     0x0
+gs     0x0
+*** Test killed with quit: ran too long (10m0s).
+exit status 2
+FAIL	github.com/andersfylling/onitamago/benchmarks/perft	600.004s

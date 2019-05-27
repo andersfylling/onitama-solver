@@ -1,0 +1,2 @@
+PASS
+ok  	github.com/andersfylling/onitamago/benchmarks/perft	0.002s
