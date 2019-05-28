@@ -5,8 +5,8 @@ import (
 )
 
 func TestMakeCompactBoard(t *testing.T) {
-	normal := Board(0x2a1408140200)
-	compact := Board(0x1551141)
+	normal := Bitboard(0x2a1408140200)
+	compact := Bitboard(0x1551141)
 
 	got := MakeCompactBoard(normal)
 	if got != compact {
@@ -15,7 +15,7 @@ func TestMakeCompactBoard(t *testing.T) {
 }
 
 func TestCompactBoard(t *testing.T) {
-	inputs := [...]Board{
+	inputs := [...]Bitboard{
 		5577006791947779410,
 		8674665223082153551,
 		15352856648520921629,

@@ -1,5 +1,7 @@
 package onitamago
 
+import "math/bits"
+
 func CreateRunes(char rune, length int) []rune {
 	runes := make([]rune, 0, length)
 	for i := 0; i < length; i++ {
@@ -9,7 +11,7 @@ func CreateRunes(char rune, length int) []rune {
 	return runes
 }
 
-func Merge(boards []Board) (b Board) {
+func Merge(boards []Bitboard) (b Bitboard) {
 	for i := range boards {
 		b |= boards[i]
 	}
@@ -17,7 +19,7 @@ func Merge(boards []Board) (b Board) {
 }
 
 // MakeCompactBoard takes a bitboard and compresses it into 25 bits
-func MakeCompactBoard(board Board) (compact Board) {
+func MakeCompactBoard(board Bitboard) (compact Bitboard) {
 	board = BoardMask & board // discard redundant info
 	for i, mask := range rows {
 		row := board & mask
@@ -33,13 +35,13 @@ func MakeCompactBoard(board Board) (compact Board) {
 }
 
 // MakeCompactBoard takes a bitboard and compresses it into 25 bits using ASM
-func MakeCompactBoardFast(board Board) Board {
+func MakeCompactBoardFast(board Bitboard) Bitboard {
 	// TODO: SIMD
 	return MakeCompactBoard(board)
 }
 
 // MakeSemiCompactBoard takes a bitboard and compresses it into 34 bits
-func MakeSemiCompactBoard(board Board) Board {
+func MakeSemiCompactBoard(board Bitboard) Bitboard {
 	const down uint64 = 8
 	const right uint64 = 1
 
@@ -50,7 +52,7 @@ func MakeSemiCompactBoard(board Board) Board {
 	return (board & 0x1f1f1f1f) | ((board & 0x1f00000000) >> 3)
 }
 
-func CompactBoardToBitBoard(compact Board) (board Board) {
+func CompactBoardToBitBoard(compact Bitboard) (board Bitboard) {
 	compact = MaskKeyBoards & compact
 
 	for i := range rows {
@@ -64,4 +66,28 @@ func CompactBoardToBitBoard(compact Board) (board Board) {
 	}
 
 	return board
+}
+
+// LSB Least Significant Bit
+func LSB(x Bitboard) BitboardPos {
+	return BitboardPos(bits.TrailingZeros64(x))
+}
+
+// NLSB Next Least Significant Bit
+func NLSB(x *Bitboard, i BitboardPos) BitboardPos {
+	*x ^= 1 << i
+	return LSB(*x)
+}
+
+// RemoveMSB removes most significant bit
+func RemoveMSB(x Bitboard) Bitboard {
+	return x & (x - 1)
+}
+
+func boardIndexToBoard(i BitboardPos) Bitboard {
+	return 1 << i
+}
+
+func BoardToIndex(x Bitboard) BitboardPos {
+	return LSB(x)
 }

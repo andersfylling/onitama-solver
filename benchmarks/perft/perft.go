@@ -3,6 +3,7 @@ package perft
 import (
 	"fmt"
 	oni "github.com/andersfylling/onitamago"
+	"github.com/andersfylling/onitamago/buildtag"
 	"time"
 )
 
@@ -50,14 +51,14 @@ func Perft(cards []oni.Card, depth int) (metrics []oni.DepthMetric, leafs uint64
 	targetDepth := uint64(depth)
 
 	// metrics
-	buildtag_onitama_metrics(func() {
+	buildtag.Onitama_metrics(func() {
 		metrics = make([]oni.DepthMetric, depth+1)
 	})
 
 	// prepare stack and move indexing
 	st.GenerateMoves()
 	moves = uint64(st.MovesLen())
-	buildtag_onitama_metrics(func() {
+	buildtag.Onitama_metrics(func() {
 		metric := createMetric(1, st.NextPlayer(), st.Moves())
 		metrics[1].Increment(&metric)
 	})
@@ -100,14 +101,14 @@ func Perft(cards []oni.Card, depth int) (metrics []oni.DepthMetric, leafs uint64
 			if ms, ready, ok := cache.match(key, st.Depth()); ok {
 				//fmt.Println(st.Depth(), key.String())
 				if !ready {
-					buildtag_onitama_metrics(func() {
+					buildtag.Onitama_metrics(func() {
 						fmt.Println(st.IsParentCacheKey(key), "was not ready..")
 					})
 					return
 				} else {
 					//fmt.Println("ready")
 				}
-				buildtag_onitama_metrics(func() {
+				buildtag.Onitama_metrics(func() {
 					for i := 0; i+int(st.Depth()) <= depth; i++ {
 						m := ms[i]
 						metrics[int(st.Depth())+i].Increment(&m)
@@ -125,7 +126,7 @@ func Perft(cards []oni.Card, depth int) (metrics []oni.DepthMetric, leafs uint64
 		st.GenerateMoves()
 		moves += uint64(st.MovesLen())
 
-		buildtag_onitama_metrics(func() { // build tag "onitama_metrics"
+		buildtag.Onitama_metrics(func() { // build tag "onitama_metrics"
 			// populate game metrics for the cached entries
 			cdepth := int(st.Depth() + 1)
 			metric := createMetric(cdepth, st.NextPlayer(), st.Moves())

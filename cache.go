@@ -72,7 +72,7 @@ func (c *CacheKey) Encode(st *State) {
 	allBoards := blueBoards | st.board[brsi] | st.board[brmi]
 	compact := MakeSemiCompactBoard(allBoards)
 
-	var bluePieces Board // 10 bits, each bit represents the sequence of blue pos in compact
+	var bluePieces Bitboard // 10 bits, each bit represents the sequence of blue pos in compact
 	highestBlue := uint64(1) << uint64(63-bits.LeadingZeros64(blueBoards))
 	blueMask := highestBlue | (highestBlue - 1)
 	piecesOfInterest := allBoards & blueMask
@@ -84,7 +84,7 @@ func (c *CacheKey) Encode(st *State) {
 		pos++
 	}
 
-	findOffset := func(master Board, students Board) uint64 {
+	findOffset := func(master Bitboard, students Bitboard) uint64 {
 		studentsBeforeMaster := (master - 1) & students
 		// github.com/tmthrgd/go-popcount.Count64(..) was slower: 69s -> 78s
 		return uint64(bits.OnesCount64(studentsBeforeMaster))
@@ -127,6 +127,8 @@ func (c *CacheKey) Encode(st *State) {
 	st.setCacheKey(*c)
 }
 
+// Deprecated
+// Does not work with the new encoder
 func (c *CacheKey) Decode(st *State) {
 	const bsi = (BluePlayer * NrOfPieceTypes) + StudentsIndex
 	const bmi = (BluePlayer * NrOfPieceTypes) + MasterIndex
@@ -148,18 +150,18 @@ func (c *CacheKey) Decode(st *State) {
 
 	// blue master
 	bm := (k >> 35) & 0xf
-	var rounds BoardIndex
+	var rounds BitboardPos
 	if bm > 0 {
 		rounds = LSB(bm) + 1
 	}
 
 	cp = st.board[bsi]
-	var p BoardIndex
-	var i BoardIndex
+	var p BitboardPos
+	var i BitboardPos
 	for p = LSB(cp); i < rounds && p != 64; p = NLSB(&cp, p) {
 		i++
 	}
-	st.board[bmi] = Board(1 << p)
+	st.board[bmi] = Bitboard(1 << p)
 	st.board[bsi] ^= st.board[bmi]
 
 	// brown master
@@ -173,14 +175,14 @@ func (c *CacheKey) Decode(st *State) {
 	for p = LSB(cp); i < rounds && p != 64; p = NLSB(&cp, p) {
 		i++
 	}
-	st.board[brmi] = Board(1 << p)
+	st.board[brmi] = Bitboard(1 << p)
 	st.board[brsi] ^= st.board[brmi]
 
 	st.activePlayer = (k >> 43) & 1
 
 	cards := (k >> 44) & 0xffff
 	for i := range st.playerCards {
-		id := cards >> (Board(i) * 4)
+		id := cards >> (Bitboard(i) * 4)
 		id &= 0xf
 		st.playerCards[i] = st.cards[id]
 	}

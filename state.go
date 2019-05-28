@@ -6,9 +6,9 @@ import (
 )
 
 const (
-	BrownPlayer Index = iota
+	BrownPlayer Number = iota
 	BluePlayer
-	NrOfPlayers Amount = BluePlayer + 1
+	NrOfPlayers Number = BluePlayer + 1
 
 	OppositePlayer = BrownPlayer
 
@@ -35,11 +35,11 @@ type State struct {
 	// Player[0] is at the bottom with the dark pieces. So if the he is not the first player, the board must rotate.
 	cards        [NrOfPlayers*NrOfPlayerCards + 1]Card
 	playerCards  [NrOfPlayers * NrOfPlayerCards]Card
-	activePlayer Index
-	otherPlayer  Index
+	activePlayer Number
+	otherPlayer  Number
 
-	board   [NrOfPlayers * NrOfPieceTypes]Board
-	temples [NrOfPlayers]Board
+	board   [NrOfPlayers * NrOfPieceTypes]Bitboard
+	temples [NrOfPlayers]Bitboard
 
 	generatedMoves    [HighestNrOfMoves * NrOfPlayerPieces * NrOfPlayerCards]Move
 	generatedMovesLen int
@@ -49,7 +49,7 @@ type State struct {
 	// the first move is 0, as there is no actual move. Think that every
 	// index represents the actual depth.
 	previousMoves [MaxDepth]Move
-	currentDepth  Index // NOTE! this must be handled during caching (key decoding)
+	currentDepth  Number // NOTE! this must be handled during caching (key decoding)
 
 	// this is only activated when using the build tag "onitama_cache"
 	previousCacheKeys previousCacheKeys
@@ -89,7 +89,7 @@ func (st *State) Moves() []Move {
 	return st.generatedMoves[:st.MovesLen()]
 }
 
-func (st *State) Depth() Index {
+func (st *State) Depth() Number {
 	return st.currentDepth
 }
 
@@ -219,7 +219,7 @@ func (st *State) CreateGame(cards []Card) {
 	st.otherPlayer = BrownPlayer
 	st.activePlayer = BluePlayer
 
-	for i := Index(0); i < 2; i++ {
+	for i := Number(0); i < 2; i++ {
 		brownIndex := NrOfPlayerCards*st.otherPlayer + i
 		blueIndex := NrOfPlayerCards*st.activePlayer + i
 		st.playerCards[brownIndex] = cards[brownIndex]
@@ -305,6 +305,6 @@ func (st *State) changePlayer() {
 	st.activePlayer = (st.activePlayer + 1) % NrOfPlayers
 }
 
-func (st *State) swapCard(cardIndex Index) {
+func (st *State) swapCard(cardIndex Number) {
 	st.suspendedCard, st.playerCards[cardIndex] = st.playerCards[cardIndex], st.suspendedCard
 }

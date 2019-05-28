@@ -12,16 +12,14 @@ const NrOfPlayerCards = 2
 // HighestNrOfMoves holds teh highest number of moves on any card
 const HighestNrOfMoves = 4
 
-// //go:generate stringer -type=Card
-type Card = Board
-
 const (
 	// Tiger card
 	//  _  _  X  _  _
 	//  _  _  _  _  _
 	//  _  _  O  _  _
 	//  _  _  X  _  _
-	Tiger Card = 0x400040400000000 << 3 // TODO...
+	Tiger        Card = 0x2000202000000000
+	TigerRotated Card = 0x20200020000000
 
 	// Dragon card
 	//  _  _  _  _  _
@@ -29,7 +27,8 @@ const (
 	//  _  _  O  _  _
 	//  _  X  _  X  _
 	//  _  _  _  _  _
-	Dragon Card = 0x11040a00000000 << 3 // TODO...
+	Dragon        Card = 0x88205000000000
+	DragonRotated Card = 0x50208800000000
 
 	// Frog card
 	//  _  _  _  _  _
@@ -37,7 +36,8 @@ const (
 	//  X  _  O  _  _
 	//  _  _  _  X  _
 	//  _  _  _  _  _
-	Frog Card = 0x8140200000000 << 3 // TODO...
+	Frog        Card = 0x40A01000000000
+	FrogRotated Card = 0x40281000000000
 
 	// Rabbit card
 	//  _  _  _  _  _
@@ -45,7 +45,8 @@ const (
 	//  _  O  _  X  _
 	//  X  _  _  _  _
 	//  _  _  _  _  _
-	Rabbit Card = 0x2050800000000 << 3 // TODO...
+	Rabbit        Card = 0x10284000000000
+	RabbitRotated Card = 0x10A04000000000
 
 	// Crab card
 	//  _  _  _  _  _
@@ -53,7 +54,8 @@ const (
 	//  X  _  O  _  X
 	//  _  _  _  _  _
 	//  _  _  _  _  _
-	Crab Card = 0x4150000000000 << 3 // TODO...
+	Crab        Card = 0x20a80000000000
+	CrabRotated Card = 0xa82000000000
 
 	// Elephant card
 	//  _  _  _  _  _
@@ -61,7 +63,8 @@ const (
 	//  _  X  O  X  _
 	//  _  _  _  _  _
 	//  _  _  _  _  _
-	Elephant Card = 0xa0e0000000000 << 3 // TODO...
+	Elephant        Card = 0x50700000000000
+	ElephantRotated Card = 0x705000000000
 
 	// Goose card
 	//  _  _  _  _  _
@@ -69,7 +72,8 @@ const (
 	//  _  X  O  X  _
 	//  _  _  _  X  _
 	//  _  _  _  _  _
-	Goose Card = 0x80e0200000000 << 3 // TODO...
+	Goose        Card = 0x40701000000000
+	GooseRotated Card = Goose
 
 	// Rooster card
 	//  _  _  _  _  _
@@ -77,7 +81,8 @@ const (
 	//  _  X  O  X  _
 	//  _  X  _  _  _
 	//  _  _  _  _  _
-	Rooster Card = 0x20e0800000000 << 3 // TODO...
+	Rooster        Card = 0x10704000000000
+	RoosterRotated Card = Rooster
 
 	// Monkey card
 	//  _  _  _  _  _
@@ -85,7 +90,8 @@ const (
 	//  _  _  O  _  _
 	//  _  X  _  X  _
 	//  _  _  _  _  _
-	Monkey Card = 0xa040a00000000 << 3 // TODO...
+	Monkey        Card = 0x50205000000000
+	MonkeyRotated Card = Monkey
 
 	// Mantis card
 	//  _  _  _  _  _
@@ -93,7 +99,8 @@ const (
 	//  _  _  O  _  _
 	//  _  _  X  _  _
 	//  _  _  _  _  _
-	Mantis Card = 0xa040400000000 << 3 // TODO...
+	Mantis        Card = 0x50202000000000
+	MantisRotated Card = Crane
 
 	// Horse card
 	//  _  _  _  _  _
@@ -101,7 +108,8 @@ const (
 	//  _  X  O  _  _
 	//  _  _  X  _  _
 	//  _  _  _  _  _
-	Horse Card = 0x40c0400000000 << 3 // TODO...
+	Horse        Card = 0x20602000000000
+	HorseRotated Card = Ox
 
 	// Ox card
 	//  _  _  _  _  _
@@ -109,7 +117,8 @@ const (
 	//  _  _  O  X  _
 	//  _  _  X  _  _
 	//  _  _  _  _  _
-	Ox Card = 0x4060400000000 << 3 // TODO...
+	Ox        Card = 0x20302000000000
+	OxRotated Card = Horse
 
 	// Crane card
 	//  _  _  _  _  _
@@ -117,7 +126,8 @@ const (
 	//  _  _  O  _  _
 	//  _  X  _  X  _
 	//  _  _  _  _  _
-	Crane Card = 0x4040a00000000 << 3 // TODO...
+	Crane        Card = 0x20205000000000
+	CraneRotated Card = Mantis
 
 	// Boar card
 	//  _  _  _  _  _
@@ -125,7 +135,8 @@ const (
 	//  _  X  O  X  _
 	//  _  _  _  _  _
 	//  _  _  _  _  _
-	Boar Card = 0x40e0000000000 << 3 // TODO...
+	Boar        Card = 0x20700000000000
+	BoarRotated Card = 0x702000000000
 
 	// Eel card
 	//  _  _  _  _  _
@@ -133,7 +144,8 @@ const (
 	//  _  _  O  X  _
 	//  _  X  _  _  _
 	//  _  _  _  _  _
-	Eel Card = 0x8060800000000 << 3 // TODO...
+	Eel        Card = 0x40304000000000
+	EelRotated Card = Cobra
 
 	// Cobra card
 	//  _  _  _  _  _
@@ -141,7 +153,8 @@ const (
 	//  _  X  O  _  _
 	//  _  _  _  X  _
 	//  _  _  _  _  _
-	Cobra Card = 0x20c0200000000 << 3 // TODO...
+	Cobra        Card = 0x10601000000000
+	CobraRotated Card = Eel
 
 	// CardOffset is how many bit position the initial card masks are shifted
 	// remember that offset is number of bit positions. Note that every card
@@ -154,17 +167,67 @@ const (
 	//  _	_	_	_	_	_	_	_
 	//  _	_	_	_	_	_	_	_
 	//  _	_	_	_	_	_	_	_
-	CardOffset BoardIndex = 0x2d
+	CardOffset BitboardPos = 45
 )
 
-func RotateCard(card Card) Card {
-	// Rotate the move card and shift it into the original position
-	card = FlipVertical(card)
-	card = FlipHorizontal(card)
-	card = card << 3
-	card = card << (8 * 3)
+// //go:generate stringer -type=Card
+type Card Bitboard
 
-	return card
+func (c Card) Bitboard() Bitboard {
+	return Bitboard(c)
+}
+
+func (c Card) Heatmap() (b BitboardHeatmap) {
+	b.AddCard(c)
+	return b
+}
+
+func (c *Card) Rotate() {
+	switch *c {
+	case Tiger:
+		*c = TigerRotated
+	case TigerRotated:
+		*c = Tiger
+	case Dragon:
+		*c = DragonRotated
+	case DragonRotated:
+		*c = Dragon
+	case Frog:
+		*c = FrogRotated
+	case FrogRotated:
+		*c = Frog
+	case Rabbit:
+		*c = RabbitRotated
+	case RabbitRotated:
+		*c = Rabbit
+	case Elephant:
+		*c = ElephantRotated
+	case ElephantRotated:
+		*c = Elephant
+	case Crab:
+		*c = CrabRotated
+	case CrabRotated:
+		*c = Crab
+	case Boar:
+		*c = BoarRotated
+	case BoarRotated:
+		*c = Boar
+
+	case Horse: // opposite of Ox
+		*c = HorseRotated
+	case Ox: // opposite of Horse
+		*c = OxRotated
+
+	case Crane: // opposite of Mantis
+		*c = Mantis
+	case Mantis: // opposite of Crane
+		*c = Crane
+
+	case Eel: // Opposite of Cobra
+		*c = Cobra
+	case Cobra: // Opposite of Eel
+		*c = Eel
+	}
 }
 
 // TODO: colours
@@ -175,6 +238,8 @@ func DrawCards() (selection []Card) {
 		Horse, Goose, Frog, Eel,
 		Tiger, Dragon, Crab, Elephant, Monkey, Mantis, Crane, Boar,
 	}
+
+	selection = make([]Card, 0, NrOfActiveCards)
 
 	for {
 	pick:

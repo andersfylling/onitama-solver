@@ -1,0 +1,25 @@
+goos: linux
+goarch: amd64
+pkg: github.com/andersfylling/onitamago
+BenchmarkNLSB/NLSB-8         	30000000	        42.2 ns/op
+BenchmarkNLSB/NLSB-8         	30000000	        42.2 ns/op
+BenchmarkNLSB/NLSB-8         	30000000	        42.1 ns/op
+BenchmarkNLSB/NLSB-8         	30000000	        42.3 ns/op
+BenchmarkNLSB/NLSB-8         	30000000	        42.5 ns/op
+BenchmarkNLSB/NLSB-8         	30000000	        42.3 ns/op
+BenchmarkNLSB/NLSB-8         	30000000	        42.3 ns/op
+BenchmarkNLSB/NLSB-8         	30000000	        43.3 ns/op
+BenchmarkNLSB/NLSB-8         	30000000	        43.2 ns/op
+BenchmarkNLSB/NLSB-8         	30000000	        42.8 ns/op
+BenchmarkNLSB/NLSB-8         	30000000	        43.0 ns/op
+BenchmarkNLSB/NLSB-8         	30000000	        42.8 ns/op
+BenchmarkNLSB/NLSB-8         	30000000	        42.6 ns/op
+BenchmarkNLSB/NLSB-8         	30000000	        42.5 ns/op
+BenchmarkNLSB/NLSB-8         	30000000	        42.2 ns/op
+BenchmarkNLSB/NLSB-8         	30000000	        42.1 ns/op
+BenchmarkNLSB/NLSB-8         	30000000	        42.0 ns/op
+BenchmarkNLSB/NLSB-8         	30000000	        42.2 ns/op
+BenchmarkNLSB/NLSB-8         	30000000	        42.2 ns/op
+BenchmarkNLSB/NLSB-8         	30000000	        42.4 ns/op
+PASS
+ok  	github.com/andersfylling/onitamago	26.393s

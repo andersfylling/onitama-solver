@@ -1,0 +1,25 @@
+goos: linux
+goarch: amd64
+pkg: github.com/andersfylling/onitamago/benchmarks/bits
+BenchmarkRotateCard/rotate-8         	 1000000	      1771 ns/op
+BenchmarkRotateCard/rotate-8         	 1000000	      1772 ns/op
+BenchmarkRotateCard/rotate-8         	 1000000	      1768 ns/op
+BenchmarkRotateCard/rotate-8         	 1000000	      1765 ns/op
+BenchmarkRotateCard/rotate-8         	 1000000	      1770 ns/op
+BenchmarkRotateCard/rotate-8         	 1000000	      1766 ns/op
+BenchmarkRotateCard/rotate-8         	 1000000	      1761 ns/op
+BenchmarkRotateCard/rotate-8         	 1000000	      1771 ns/op
+BenchmarkRotateCard/rotate-8         	 1000000	      1759 ns/op
+BenchmarkRotateCard/rotate-8         	 1000000	      1769 ns/op
+BenchmarkRotateCard/rotate-8         	 1000000	      1765 ns/op
+BenchmarkRotateCard/rotate-8         	 1000000	      1766 ns/op
+BenchmarkRotateCard/rotate-8         	 1000000	      1775 ns/op
+BenchmarkRotateCard/rotate-8         	 1000000	      1768 ns/op
+BenchmarkRotateCard/rotate-8         	 1000000	      1784 ns/op
+BenchmarkRotateCard/rotate-8         	 1000000	      1768 ns/op
+BenchmarkRotateCard/rotate-8         	 1000000	      1762 ns/op
+BenchmarkRotateCard/rotate-8         	 1000000	      1767 ns/op
+BenchmarkRotateCard/rotate-8         	 1000000	      1771 ns/op
+BenchmarkRotateCard/rotate-8         	 1000000	      1768 ns/op
+PASS
+ok  	github.com/andersfylling/onitamago/benchmarks/bits	35.777s

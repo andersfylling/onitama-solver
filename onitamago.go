@@ -1,5 +1,7 @@
 package onitamago
 
+type Number = uint64
+
 func NewGame() (st State, game Game) {
 	st = State{}
 	st.CreateGame(nil)

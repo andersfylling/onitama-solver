@@ -1,3 +1,6 @@
 module github.com/andersfylling/onitamago
 
-require github.com/stretchr/testify v1.3.0
+require (
+	github.com/disintegration/imaging v1.6.0
+	github.com/stretchr/testify v1.3.0
+)

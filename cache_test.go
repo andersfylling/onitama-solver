@@ -34,6 +34,8 @@ func TestCacheKey_Decode_Encode(t *testing.T) {
 		t.Fatal("key should not be 0")
 	}
 
+	fmt.Println(key, key.String())
+
 	// duplicates on 234468657779965979
 
 	fmt.Println(st)

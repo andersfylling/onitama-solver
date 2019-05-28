@@ -17,6 +17,9 @@ func TestRotateCard(t *testing.T) {
 
 	card = Elephant
 	wants = 0x705000000000
-	got = RotateCard(card)
+
+	got = card
+	got.Rotate()
+
 	check(t, got, wants)
 }

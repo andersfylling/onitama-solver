@@ -1,0 +1,25 @@
+goos: linux
+goarch: amd64
+pkg: github.com/andersfylling/onitamago/benchmarks/bits
+BenchmarkCompactBitboard/compact-8         	100000000	        10.6 ns/op
+BenchmarkCompactBitboard/compact-8         	100000000	        10.4 ns/op
+BenchmarkCompactBitboard/compact-8         	100000000	        10.3 ns/op
+BenchmarkCompactBitboard/compact-8         	100000000	        10.2 ns/op
+BenchmarkCompactBitboard/compact-8         	100000000	        10.5 ns/op
+BenchmarkCompactBitboard/compact-8         	100000000	        10.3 ns/op
+BenchmarkCompactBitboard/compact-8         	100000000	        10.4 ns/op
+BenchmarkCompactBitboard/compact-8         	100000000	        10.5 ns/op
+BenchmarkCompactBitboard/compact-8         	100000000	        10.3 ns/op
+BenchmarkCompactBitboard/compact-8         	100000000	        10.3 ns/op
+BenchmarkCompactBitboard/compact-8         	100000000	        10.9 ns/op
+BenchmarkCompactBitboard/compact-8         	100000000	        10.7 ns/op
+BenchmarkCompactBitboard/compact-8         	100000000	        10.8 ns/op
+BenchmarkCompactBitboard/compact-8         	100000000	        10.6 ns/op
+BenchmarkCompactBitboard/compact-8         	100000000	        10.6 ns/op
+BenchmarkCompactBitboard/compact-8         	100000000	        10.4 ns/op
+BenchmarkCompactBitboard/compact-8         	100000000	        10.2 ns/op
+BenchmarkCompactBitboard/compact-8         	100000000	        10.4 ns/op
+BenchmarkCompactBitboard/compact-8         	100000000	        10.4 ns/op
+BenchmarkCompactBitboard/compact-8         	100000000	        10.4 ns/op
+PASS
+ok  	github.com/andersfylling/onitamago/benchmarks/bits	21.175s

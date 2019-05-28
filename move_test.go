@@ -6,7 +6,7 @@ import (
 )
 
 func TestMove_MoveFriendlyBoardIndex(t *testing.T) {
-	var f = func(action MoveAction) BoardIndex {
+	var f = func(action MoveAction) BitboardPos {
 		move := setMoveAction(0, action)
 		return getMoveFriendlyBoardIndex(move)
 	}
@@ -24,7 +24,7 @@ func TestMove_MoveFriendlyBoardIndex(t *testing.T) {
 }
 
 func TestMove_MoveHostileBoardIndex(t *testing.T) {
-	var f = func(action MoveAction) BoardIndex {
+	var f = func(action MoveAction) BitboardPos {
 		move := setMoveAction(0, action)
 		return getMoveHostileBoardIndex(move)
 	}
@@ -42,7 +42,7 @@ func TestMove_MoveHostileBoardIndex(t *testing.T) {
 }
 
 func TestMove_MoveWin(t *testing.T) {
-	var f = func(action MoveAction) BoardIndex {
+	var f = func(action MoveAction) BitboardPos {
 		move := setMoveAction(0, action)
 		return getMoveWin(move)
 	}

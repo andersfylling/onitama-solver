@@ -2,6 +2,7 @@ package perft
 
 import (
 	"fmt"
+	"github.com/andersfylling/onitamago/buildtag"
 	"strconv"
 	"strings"
 	"testing"
@@ -16,7 +17,7 @@ func BenchmarkPerft(b *testing.B) {
 		{9060113251827712, 4609221463113728, 4547854970388480, 38316124802121728, 18067449945522176},
 		{22641143439163392, 4547854970388480, 9112889809960960, 2305878331024736256, 18137612531269632},
 		{38316124802121728, 9060113251827712, 9130344557051904, 18067449945522176, 4627019807588352},
-		{4627019807588352, 18137612531269632, 22553319947894784, 9130344557051904, 4547854970388480},
+		/*5*/ {4627019807588352, 18137612531269632, 22553319947894784, 9130344557051904, 4547854970388480},
 		{38316124802121728, 9060113251827712, 9042727224213504, 22553526106324992, 9130344557051904},
 		{9060113251827712, 18190389089402880, 22553319947894784, 22641143439163392, 4609221463113728},
 		{22553526106324992, 22641143439163392, 9112889809960960, 4627019807588352, 18137612531269632},
@@ -33,7 +34,7 @@ func BenchmarkPerft(b *testing.B) {
 		{9060113251827712, 9191917208207360, 18137612531269632, 4609221463113728, 2305878331024736256},
 	}
 	cards := cardsSlice[5]
-	depth := 8
+	depth := 9
 
 	b.ReportAllocs()
 
@@ -64,7 +65,7 @@ func BenchmarkPERFT(b *testing.B) {
 	}
 	durations := []time.Duration{}
 
-	for depth := 10; depth <= 10; depth++ {
+	for depth := 8; depth <= 8; depth++ {
 		// sequential only!
 		title := fmt.Sprintf("depth(%d)", depth)
 		b.Run(title, func(b *testing.B) {
@@ -80,7 +81,7 @@ func BenchmarkPERFT(b *testing.B) {
 
 func TestFetchMetrics(t *testing.T) {
 	skip := true
-	buildtag_onitama_metrics(func() {
+	buildtag.Onitama_metrics(func() {
 		skip = false
 	})
 	if skip {
@@ -123,7 +124,7 @@ func TestFetchMetrics(t *testing.T) {
 func TestPERFTCacheAcc(t *testing.T) {
 	skip := true
 	var showCachePrune bool
-	buildtag_onitama_metrics(func() {
+	buildtag.Onitama_metrics(func() {
 		skip = false
 		buildtag_onitama_cache(100, 0, func() {
 			showCachePrune = true

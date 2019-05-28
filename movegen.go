@@ -1,6 +1,7 @@
 package onitamago
 
-func pieces(player BoardIndex, board [NrOfPlayers * NrOfPieceTypes]Board) Board {
+//go:inline
+func pieces(player BitboardPos, board [NrOfPlayers * NrOfPieceTypes]Bitboard) Bitboard {
 	// bind the function to our compile time assumption
 	if NrOfPieceTypes != 3 {
 		panic("NrOfPieceTypes is no longer 2")
@@ -8,22 +9,31 @@ func pieces(player BoardIndex, board [NrOfPlayers * NrOfPieceTypes]Board) Board 
 	return board[player*NrOfPieceTypes] | board[player*NrOfPieceTypes+1]
 }
 
-func generateMoves(st *State) (moveIndex Index) {
+//go:inline
+func addMovePositionsToPieceBB(card Card, pos BitboardPos, friendlyPieces Bitboard) (moves Bitboard) {
+	moves = card.Bitboard() >> (CardOffset - pos)
+	moves ^= moves & friendlyPieces // remove moves that hits a friendly warrior
+	moves &= BoardMask              // ignore positions outside the board
+
+	return
+}
+
+func generateMoves(st *State) (moveIndex Number) {
 	friends := pieces(st.activePlayer, st.board)
+	var moves Bitboard
+	var pieces Bitboard
 	for c := st.activePlayer * NrOfPlayerCards; c < (st.activePlayer*NrOfPlayerCards + NrOfPlayerCards); c++ {
 		card := st.playerCards[c]
 		// TODO: remove if sentence
 		// add some virtual layer
 		if st.currentDepth%2 == 1 {
-			card = RotateCard(card)
+			card.Rotate()
 		}
-		pieces := friends
+		pieces = friends
 		for i := LSB(pieces); i != 64; i = NLSB(&pieces, i) {
-			move := card >> (CardOffset - i)
-			move ^= move & friends // remove moves that hits a friendly warrior
-			move &= BoardMask      // ignore positions outside the board
+			moves = addMovePositionsToPieceBB(card, i, friends)
 
-			for j := LSB(move); j != 64; j = NLSB(&move, j) {
+			for j := LSB(moves); j != 64; j = NLSB(&moves, j) {
 				st.generatedMoves[moveIndex] = encodeMove(st, i, j, c)
 				moveIndex++
 			}

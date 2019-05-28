@@ -1,7 +1,7 @@
 package onitamago
 
 type Move = uint16
-type MoveAction = Board
+type MoveAction = Bitboard
 
 // TypeUndoMove can be used to signify the state should undo the current move
 // may it be to go backwards in a game tree or for other reasons.
@@ -18,20 +18,20 @@ func resetMove(m Move) Move {
 	return 0
 }
 
-func setMoveTo(m Move, pos BoardIndex) Move {
+func setMoveTo(m Move, pos BitboardPos) Move {
 	return m | Move(pos)
 }
 
-func getMoveTo(m Move) BoardIndex {
-	return BoardIndex(m & MoveMaskTo)
+func getMoveTo(m Move) BitboardPos {
+	return BitboardPos(m & MoveMaskTo)
 }
 
-func setMoveFrom(m Move, pos BoardIndex) Move {
+func setMoveFrom(m Move, pos BitboardPos) Move {
 	return m | Move(pos<<6)
 }
 
-func getMoveFrom(m Move) BoardIndex {
-	return BoardIndex((m & MoveMaskFrom) >> 6)
+func getMoveFrom(m Move) BitboardPos {
+	return BitboardPos((m & MoveMaskFrom) >> 6)
 }
 
 func setMoveAction(m Move, action MoveAction) Move {
@@ -40,27 +40,27 @@ func setMoveAction(m Move, action MoveAction) Move {
 	return m | Move(action)
 }
 
-func getMoveWin(m Move) Index {
-	return Index(getMoveAction(m) & 1)
+func getMoveWin(m Move) BitboardPos {
+	return BitboardPos(getMoveAction(m) & 1)
 }
 
-func getMoveFriendlyBoardIndex(m Move) Index {
+func getMoveFriendlyBoardIndex(m Move) BitboardPos {
 	action := getMoveAction(m)
-	return Index((action & 2) >> 1)
+	return BitboardPos((action & 2) >> 1)
 }
 
-func getMoveHostileBoardIndex(m Move) Index {
+func getMoveHostileBoardIndex(m Move) BitboardPos {
 	action := getMoveAction(m)
 	master := action & 1
 	temple := action & 4
-	return Index((temple >> 1) | (((temple >> 2) | master) ^ (temple >> 2)))
+	return BitboardPos((temple >> 1) | (((temple >> 2) | master) ^ (temple >> 2)))
 }
 
 // getMoveActionAttackedPieceBoard if a piece was attacked, this returns the
 // board where the related bit is set.
 // This should be used together with getMoveHostileBoardIndex to handle
 // temple attacks.
-func getMoveActionAttackedPieceBoard(m Move) Board {
+func getMoveActionAttackedPieceBoard(m Move) Bitboard {
 	action := getMoveAction(m)
 	if (action & 4) > 0 {
 		return 0
@@ -77,15 +77,15 @@ func getPieceMoved(m Move) Piece {
 	return Piece(getMoveFriendlyBoardIndex(m)) // Master == 1, Student == 0
 }
 
-func setMoveCardIndex(m Move, index BoardIndex) Move {
+func setMoveCardIndex(m Move, index BitboardPos) Move {
 	return m | Move(index<<15)
 }
 
-func getMoveCardIndex(m Move) BoardIndex {
-	return BoardIndex(m&MoveMaskCardIndex) >> 15
+func getMoveCardIndex(m Move) BitboardPos {
+	return BitboardPos(m&MoveMaskCardIndex) >> 15
 }
 
-func encodeMove(st *State, fromIndex, toIndex, cardIndex BoardIndex) (move Move) {
+func encodeMove(st *State, fromIndex, toIndex, cardIndex BitboardPos) (move Move) {
 	move = resetMove(move) // in case code gets change, and re-used populated bits later on
 
 	///////////////////
@@ -129,7 +129,7 @@ func encodeMove(st *State, fromIndex, toIndex, cardIndex BoardIndex) (move Move)
 	return move
 }
 
-func explainMove(m Move, playerIndex BoardIndex, cardsBeforeMove []Card) string {
+func explainMove(m Move, playerIndex BitboardPos, cardsBeforeMove []Card) string {
 	from := bitboardIndexToOnitamaIndex(getMoveFrom(m))
 	to := bitboardIndexToOnitamaIndex(getMoveTo(m))
 
