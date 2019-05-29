@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"github.com/andersfylling/onitamago"
-	"github.com/andersfylling/onitamago/benchmarks/perft"
 	"time"
 )
 
@@ -26,7 +25,7 @@ func PERFT(results chan<- *perftInfo, cards []onitamago.Card, maxDepth int) {
 	for depth := 1; depth < maxDepth; depth++ {
 		var ds []time.Duration
 		for i := 0; i < 4; i++ {
-			_, _, _, d := perft.Perft(cards, depth)
+			_, _, d := onitamago.SearchExhaustive(cards, uint64(depth))
 			ds = append(ds, d)
 		}
 
@@ -70,7 +69,7 @@ func main() {
 		fmt.Println("")
 
 		for depth := 1; depth < 11; depth++ {
-			_, _, _, d := perft.Perft(cards, depth)
+			_, _, d := onitamago.SearchExhaustive(cards, uint64(depth))
 			fmt.Println("perft", depth, d)
 		}
 	}

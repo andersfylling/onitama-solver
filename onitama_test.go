@@ -41,7 +41,7 @@ func TestRandomSampling(t *testing.T) {
 
 	var moves []Move
 	//fmt.Println(st)
-	for i := 0; i < 20; i++ {
+	for i := 0; i < MaxDepth; i++ {
 		st.GenerateMoves()
 		if st.generatedMovesLen == 0 {
 			break

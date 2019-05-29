@@ -4,8 +4,8 @@ package onitamago
 
 type previousCacheKeys struct{}
 
-func (st *State) setCacheKey(k CacheKey) {}
+func (st *State) setCacheKey(k Key) {}
 
 func (st *State) removeLastCacheKey() {}
 
-func (st *State) IsParentCacheKey(k CacheKey) bool { return false }
+func (st *State) IsParentCacheKey(k Key) bool { return false }

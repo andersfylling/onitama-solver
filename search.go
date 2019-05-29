@@ -1,21 +1,20 @@
-package perft
+package onitamago
 
 import (
 	"fmt"
-	oni "github.com/andersfylling/onitamago"
 	"github.com/andersfylling/onitamago/buildtag"
 	"time"
 )
 
-func createMetric(depth, activePlayer int, moves []oni.Move) (metric oni.DepthMetric) {
-	metric = oni.DepthMetric{
+func createMetric(depth, activePlayer int, moves []Move) (metric DepthMetric) {
+	metric = DepthMetric{
 		Depth:          depth,
 		ActivePlayer:   activePlayer,
 		GeneratedMoves: uint64(len(moves)),
 	}
 
 	// TODO: win paths
-	var actions oni.Move
+	var actions Move
 	for _, move := range moves {
 		actions = 0
 		actions = (move >> 12) & 7
@@ -36,46 +35,51 @@ func createMetric(depth, activePlayer int, moves []oni.Move) (metric oni.DepthMe
 	return metric
 }
 
-func Perft(cards []oni.Card, depth int) (metrics []oni.DepthMetric, leafs uint64, moves uint64, duration time.Duration) {
-	if depth == 0 {
-		return nil, 1, 0, 0
+// SearchExhaustive uses depth first search to goes through the
+// entire game tree generated from the card configuration until
+// the target depth is reached.
+// However, when a parent generates children moves that causes a win,
+// that parent branch is no longer explored as it's assumed the player
+// prioritizes a win instead of continuing the game.
+func SearchExhaustive(cards []Card, targetDepth uint64) (metrics []DepthMetric, winPaths [][]Move, duration time.Duration) {
+	if targetDepth == 0 {
+		return nil, nil, 0
 	}
-	stack := oni.Stack{}
+	stack := Stack{}
 
-	st := oni.State{}
+	st := State{}
 	st.CreateGame(cards)
-	start := time.Now()
 
 	// caching - use build tag onitama_cache
 	cache := onitamaCache{}
-	targetDepth := uint64(depth)
 
 	// metrics
 	buildtag.Onitama_metrics(func() {
-		metrics = make([]oni.DepthMetric, depth+1)
+		metrics = make([]DepthMetric, targetDepth+1)
 	})
 
 	// prepare stack and move indexing
+	start := time.Now()
 	st.GenerateMoves()
-	moves = uint64(st.MovesLen())
 	buildtag.Onitama_metrics(func() {
 		metric := createMetric(1, st.NextPlayer(), st.Moves())
 		metrics[1].Increment(&metric)
 	})
-	if depth == 1 {
-		return metrics, moves, moves, time.Now().Sub(start)
+	if targetDepth == 1 {
+		return metrics, nil, time.Now().Sub(start)
 	}
 
 	// populate stack with some work
-	stack.Push(oni.MoveUndo)
+	stack.Push(MoveUndo)
 	stack.PushMany(st.Moves())
-	var move oni.Move
+	var move Move
 	var anyWins bool
+	var key Key
 	for {
-		if move = stack.Pop(); move == oni.MoveUndo {
+		if move = stack.Pop(); move == MoveUndo {
 			// finished processing node children will yield a skip move
 			// to signify we need to go one depth back up
-			for ; move == oni.MoveUndo && stack.Size() > 0; move = stack.Pop() {
+			for ; move == MoveUndo && stack.Size() > 0; move = stack.Pop() {
 				st.UndoMove()
 			}
 			if stack.Size() == 0 {
@@ -85,18 +89,21 @@ func Perft(cards []oni.Card, depth int) (metrics []oni.DepthMetric, leafs uint64
 
 		st.ApplyMove(move)
 		var skip bool
-		buildtag_onitama_cache(targetDepth, st.Depth(), func() { // build tag "onitama_cache"
-			var key oni.CacheKey
-			key.Encode(&st)
-
-			buildtag_onitama_noinfinity(func() { // build tag "onitama_noinfinity"
-				if oni.InfinityBranch(&st) {
-					skip = true
-				}
-			})
-			if skip {
+		buildtag.Onitama_cache(func() {
+			// TODO: look ups can still take place
+			// but new cache elements can not...
+			if targetDepth-st.Depth() < CacheableSubTreeMinHeight {
 				return
 			}
+			key.Encode(&st)
+			//buildtag_onitama_noinfinity(func() {
+			//	if oni.InfinityBranch(&st) {
+			//		skip = true
+			//	}
+			//})
+			//if skip {
+			//	return
+			//}
 
 			if ms, ready, ok := cache.match(key, st.Depth()); ok {
 				//fmt.Println(st.Depth(), key.String())
@@ -109,9 +116,9 @@ func Perft(cards []oni.Card, depth int) (metrics []oni.DepthMetric, leafs uint64
 					//fmt.Println("ready")
 				}
 				buildtag.Onitama_metrics(func() {
-					for i := 0; i+int(st.Depth()) <= depth; i++ {
+					for i := Number(0); i+st.Depth() <= targetDepth; i++ {
 						m := ms[i]
-						metrics[int(st.Depth())+i].Increment(&m)
+						metrics[st.Depth()+i].Increment(&m)
 					}
 				})
 				skip = true
@@ -124,21 +131,22 @@ func Perft(cards []oni.Card, depth int) (metrics []oni.DepthMetric, leafs uint64
 			continue
 		}
 		st.GenerateMoves()
-		moves += uint64(st.MovesLen())
 
 		buildtag.Onitama_metrics(func() { // build tag "onitama_metrics"
 			// populate game metrics for the cached entries
 			cdepth := int(st.Depth() + 1)
 			metric := createMetric(cdepth, st.NextPlayer(), st.Moves())
 			metrics[cdepth].Increment(&metric)
-			cache.addMetrics(targetDepth, uint64(cdepth), stack.Size(), metric)
+
+			buildtag.Onitama_cache(func() {
+				cache.addMetrics(targetDepth, uint64(cdepth), stack.Size(), metric)
+			})
 		})
 
-		if int(st.Depth()+1) >= depth {
-			leafs += uint64(st.MovesLen())
+		if st.Depth()+1 >= targetDepth {
 			st.UndoMove()
 		} else {
-			stack.Push(oni.MoveUndo) // identify a new depth
+			stack.Push(MoveUndo) // identify a new depth
 			anyWins = false
 			for i := range st.Moves() {
 				if (st.Moves()[i] & (1 << 12)) > 0 {
@@ -152,5 +160,5 @@ func Perft(cards []oni.Card, depth int) (metrics []oni.DepthMetric, leafs uint64
 		}
 	}
 
-	return metrics, leafs, moves, time.Now().Sub(start)
+	return metrics, winPaths, time.Now().Sub(start)
 }

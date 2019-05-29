@@ -1,202 +1,107 @@
+// +build onitama_cache
+
 package onitamago
 
-import (
-	"fmt"
-	"math/bits"
-)
-
-const (
-	MaskKeyBoards uint64 = 0x1ffffff
-)
-
-// CacheKey represents all the pieces, current player, relative cards.
-// move history is discarded.
+// The performance elbow is at depth 7 or 8.
+// However, the delta from 7 to 8 is around -560%.
+// As depth 7 is from 250-700ms, this seems like the most
+// significant jump in depth time. Therefore we do not
+// cache sub-trees with a height less than 7, as this
+// requires extra loop time and slows down the application
+// more than I've found the cache to help.
 //
-// Note! this will not function for states with missing masters and as such should not
-//  be calculated on leaf nodes.
-type CacheKey uint64
+//  Depth/Seconds
+//
+//      |     |     |     |  X  |
+//  10s +-----+-----+-----+-X---+
+//      |     |     |     |X    |
+//      |     |     |    XX     |
+//   1s +-----+-----+--XX-+-----+
+//      |     |   XXXXX   |     |
+//      XXXXXXXXXX  |     |     |
+//      |     |     |     |     |
+//   0s +-----+-----+-----+-----+
+//      5     6     7     8     9
+const CacheableSubTreeMinHeight = 7
 
-func (c *CacheKey) String() string {
-	binary := []byte(fmt.Sprintf("%064b", *c))
-
-	merge := func(slices [][]byte, delim byte) (b []byte) {
-		b = make([]byte, 0, 94)
-		for i := range slices {
-			b = append(b, slices[i]...)
-			b = append(b, delim)
-		}
-
-		return b[:len(b)-1]
-	}
-
-	// cards
-	cards := [][]byte{
-		binary[0:3], // suspended
-		binary[3:6], // blue 2
-		binary[6:9], // blue 1
-	}
-	segments := [][]byte{
-		merge(cards, '.'),                     // player cards
-		binary[64-34-10-5-5-1 : 64-34-10-5-5], // active player
-		binary[64-34-10-5-5 : 64-34-10-5],     // brown master
-		binary[64-34-10-5 : 64-34-10],         // blue master
-		binary[64-34-10 : 64-34],              // blue students, relative positions
-		binary[64-34:],                        // pieces
-	}
-
-	return string(merge(segments, '|'))
+func cacheableDepth(targetDepth, currentDepth uint64) bool {
+	return targetDepth-currentDepth > 6
 }
 
-func (c *CacheKey) Encode(st *State) {
-	// only call this method after ApplyMove or the current depth of a state
-	// has been correctly set. This method sets the cache key for a state at
-	// the current depth.
-	const bi = BluePlayer * NrOfPieceTypes
-	const bsi = (BluePlayer * NrOfPieceTypes) + StudentsIndex
-	const bmi = (BluePlayer * NrOfPieceTypes) + MasterIndex
-	const bri = BrownPlayer * NrOfPieceTypes
-	const brsi = (BrownPlayer * NrOfPieceTypes) + StudentsIndex
-	const brmi = (BrownPlayer * NrOfPieceTypes) + MasterIndex
+type cacheInfo struct {
+	depth   uint64
+	uses    int
+	matches int
+	key     Key
 
-	findCardID := func(card Card) uint64 {
-		for i := range st.cards {
-			if st.cards[i] == card {
-				return uint64(i)
-			}
-		}
+	StopAfterIndex int
+	Ready          bool
 
-		panic("missing card")
-	}
-
-	blueBoards := st.board[bsi] | st.board[bmi]
-	allBoards := blueBoards | st.board[brsi] | st.board[brmi]
-	compact := MakeSemiCompactBoard(allBoards)
-
-	var bluePieces Bitboard // 10 bits, each bit represents the sequence of blue pos in compact
-	highestBlue := uint64(1) << uint64(63-bits.LeadingZeros64(blueBoards))
-	blueMask := highestBlue | (highestBlue - 1)
-	piecesOfInterest := allBoards & blueMask
-	var pos uint64
-	for i := LSB(piecesOfInterest); i != 64; i = NLSB(&piecesOfInterest, i) {
-		if pieceAtBoardIndex(blueBoards, i) {
-			bluePieces |= 1 << pos
-		}
-		pos++
-	}
-
-	findOffset := func(master Bitboard, students Bitboard) uint64 {
-		studentsBeforeMaster := (master - 1) & students
-		// github.com/tmthrgd/go-popcount.Count64(..) was slower: 69s -> 78s
-		return uint64(bits.OnesCount64(studentsBeforeMaster))
-	}
-
-	blueMaster := uint64(1) << findOffset(st.board[bmi], st.board[bsi])
-	brownMaster := uint64(1) << findOffset(st.board[brmi], st.board[brsi])
-
-	var cards uint64
-
-	// ordering of the players cards does not matter
-	// so use the lowest index first to get more cache hits
-	cardIDs := [...]uint64{
-		findCardID(st.playerCards[0]),
-		findCardID(st.playerCards[1]),
-		findCardID(st.suspendedCard),
-	}
-	if cardIDs[0] > cardIDs[1] {
-		cardIDs[0], cardIDs[1] = cardIDs[1], cardIDs[0]
-	}
-	cards |= cardIDs[0]
-	cards |= cardIDs[1] << 3
-	cards |= cardIDs[2] << 6
-
-	var offset uint64
-	holder := compact //<< offset
-	offset += 34
-	holder |= bluePieces << offset
-	offset += 10
-	holder |= blueMaster << offset
-	offset += 5
-	holder |= brownMaster << offset
-	offset += 5
-	holder |= st.activePlayer << offset
-	offset += 1
-	holder |= cards << offset
-	//offset += uint64(3 * len(st.playerCards))
-
-	*c = CacheKey(holder)
-	st.setCacheKey(*c)
+	metrics [MaxDepth]DepthMetric
 }
 
-// Deprecated
-// Does not work with the new encoder
-func (c *CacheKey) Decode(st *State) {
-	const bsi = (BluePlayer * NrOfPieceTypes) + StudentsIndex
-	const bmi = (BluePlayer * NrOfPieceTypes) + MasterIndex
-	const brsi = (BrownPlayer * NrOfPieceTypes) + StudentsIndex
-	const brmi = (BrownPlayer * NrOfPieceTypes) + MasterIndex
-
-	k := uint64(*c)
-	board := CompactBoardToBitBoard(k)
-	bluesPos := (k >> 25) & 0x3ff
-
-	cp := board
-	var shift uint64
-	for i := LSB(cp); i != 64; i = NLSB(&cp, i) {
-		blue := 1 & (bluesPos >> shift)
-		st.board[bsi] |= blue << i
-		shift++
+func (c *cacheInfo) reset() {
+	c.uses = 0
+	c.matches = 0
+	c.Ready = false
+	for i := range c.metrics {
+		c.metrics[i].Reset()
 	}
-	st.board[brsi] = board ^ st.board[bsi]
+}
 
-	// blue master
-	bm := (k >> 35) & 0xf
-	var rounds BitboardPos
-	if bm > 0 {
-		rounds = LSB(bm) + 1
-	}
+type onitamaCache struct {
+	entries [10000]cacheInfo
+	index   int
+}
 
-	cp = st.board[bsi]
-	var p BitboardPos
-	var i BitboardPos
-	for p = LSB(cp); i < rounds && p != 64; p = NLSB(&cp, p) {
-		i++
-	}
-	st.board[bmi] = Bitboard(1 << p)
-	st.board[bsi] ^= st.board[bmi]
+func (c *onitamaCache) match(k Key, currentDepth uint64) ([]DepthMetric, bool, bool) {
+	for i := 0; i < c.index; i++ {
+		if k != c.entries[i].key {
+			continue
+		}
+		c.entries[i].matches++
 
-	// brown master
-	bm = (k >> 39) & 0xf
-	if bm > 0 {
-		rounds = LSB(bm) + 1
-	}
-
-	cp = st.board[brsi]
-	i = 0
-	for p = LSB(cp); i < rounds && p != 64; p = NLSB(&cp, p) {
-		i++
-	}
-	st.board[brmi] = Bitboard(1 << p)
-	st.board[brsi] ^= st.board[brmi]
-
-	st.activePlayer = (k >> 43) & 1
-
-	cards := (k >> 44) & 0xffff
-	for i := range st.playerCards {
-		id := cards >> (Bitboard(i) * 4)
-		id &= 0xf
-		st.playerCards[i] = st.cards[id]
-	}
-
-	for i := range st.cards {
-		var used bool
-		for j := range st.playerCards {
-			if used = st.cards[i] == st.playerCards[j]; used {
-				break
-			}
+		// only works when the subtree is as high or higher
+		if currentDepth < c.entries[i].depth {
+			continue
 		}
 
-		if !used {
-			st.suspendedCard = st.cards[i]
+		index := i
+		if i > 0 && c.entries[i-1].matches < c.entries[i].matches {
+			// move upwards to avoid being overwritten when the size limit is hit
+			c.entries[i-1], c.entries[i] = c.entries[i], c.entries[i-1]
+			index = i - 1
 		}
+
+		return c.entries[index].metrics[:], c.entries[index].Ready, true
+	}
+	return nil, false, false
+}
+
+func (c *onitamaCache) add(k Key, targetDepth, currentDepth uint64, index int) {
+	if c.index == len(c.entries) {
+		c.index = int(float32(len(c.entries)) * 0.8)
+	}
+
+	c.entries[c.index].reset()
+	c.entries[c.index].key = k
+	c.entries[c.index].depth = currentDepth
+	c.entries[c.index].StopAfterIndex = index
+	c.index++
+}
+
+func (c *onitamaCache) addMetrics(targetDepth, currentDepth uint64, index int, metric DepthMetric) {
+	for i := c.index - 1; i >= 0; i-- {
+		if c.entries[i].Ready {
+			continue
+		}
+
+		if c.entries[i].StopAfterIndex > index {
+			c.entries[i].Ready = true
+			continue
+		}
+
+		mdepth := int(currentDepth - c.entries[i].depth)
+		c.entries[i].metrics[mdepth].Increment(&metric)
 	}
 }

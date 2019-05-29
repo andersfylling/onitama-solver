@@ -33,7 +33,7 @@ func BenchmarkPerft(b *testing.B) {
 		{4627019807588352, 9191917208207360, 9130344557051904, 18190389089402880, 22553526106324992},
 		{9060113251827712, 9191917208207360, 18137612531269632, 4609221463113728, 2305878331024736256},
 	}
-	cards := cardsSlice[5]
+	cards := cardsSlice[2]
 	depth := 9
 
 	b.ReportAllocs()
@@ -42,7 +42,7 @@ func BenchmarkPerft(b *testing.B) {
 	var d time.Duration
 	b.Run(title, func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			_, _, _, d = Perft(cards, depth)
+			_, _, d = oni.SearchExhaustive(cards, uint64(depth))
 		}
 	})
 	fmt.Println("duration", d)
@@ -70,7 +70,7 @@ func BenchmarkPERFT(b *testing.B) {
 		title := fmt.Sprintf("depth(%d)", depth)
 		b.Run(title, func(b *testing.B) {
 			for i := 0; i < b.N; i++ {
-				_, _, _, d := Perft(cards, depth)
+				_, _, d := oni.SearchExhaustive(cards, uint64(depth))
 				durations = append(durations, d)
 			}
 		})
@@ -98,7 +98,7 @@ func TestFetchMetrics(t *testing.T) {
 	base := 1
 	for depth := base; depth <= 9; depth++ {
 		// sequential only!
-		m, _, _, _ := Perft(cards, depth)
+		m, _, _ := oni.SearchExhaustive(cards, uint64(depth))
 		metrics = append(metrics, m)
 		var moves uint64
 		if len(m) > 0 {
@@ -119,37 +119,6 @@ func TestFetchMetrics(t *testing.T) {
 	b.Write([]byte("}\n"))
 
 	fmt.Print(b.String())
-}
-
-func TestPERFTCacheAcc(t *testing.T) {
-	skip := true
-	var showCachePrune bool
-	buildtag.Onitama_metrics(func() {
-		skip = false
-		buildtag_onitama_cache(100, 0, func() {
-			showCachePrune = true
-		})
-	})
-	if skip {
-		return
-	}
-
-	cards := []oni.Card{
-		oni.Frog, oni.Eel,
-		oni.Dragon, oni.Crab,
-		oni.Tiger,
-	}
-
-	for depth := 9; depth <= 9; depth++ {
-		// sequential only!
-		m, leafs, _, _ := Perft(cards, depth)
-		mleafs := m[len(m)-1].GeneratedMoves
-		fmt.Println(depth, leafs)
-
-		if showCachePrune {
-			fmt.Println("cache pruned", mleafs-leafs)
-		}
-	}
 }
 
 var vanilla_metrics = [][]int{

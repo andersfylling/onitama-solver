@@ -28,7 +28,7 @@ func TestCacheKey_Decode_Encode(t *testing.T) {
 		t.Fatal("expected >0 moves to be generated")
 	}
 
-	var key CacheKey
+	var key Key
 	key.Encode(&st)
 	if key == 0 {
 		t.Fatal("key should not be 0")
@@ -41,12 +41,12 @@ func TestCacheKey_Decode_Encode(t *testing.T) {
 	fmt.Println(st)
 	st.Reset()
 	fmt.Println(st)
-	key.Decode(&st)
-	fmt.Println(st)
+	//	key.Decode(&st)
+	//	fmt.Println(st)
 }
 
 func TestCacheKey_Encode(t *testing.T) {
-	key := CacheKey(7534804192330777627)
+	key := Key(7534804192330777627)
 	expects := "011.010.001|0|01000|10000|0000011111|0111101000000000000000010000011011"
 	if key.String() != expects {
 		t.Error("\n :::" + key.String() + "\n  =>" + expects)

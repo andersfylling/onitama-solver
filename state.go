@@ -11,8 +11,6 @@ const (
 	NrOfPlayers Number = BluePlayer + 1
 
 	OppositePlayer = BrownPlayer
-
-	MaxDepth = 30
 )
 
 type Game struct {

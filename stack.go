@@ -1,5 +1,9 @@
 package onitamago
 
+import "github.com/andersfylling/onitamago/oniconst"
+
+const MaxDepth = oniconst.MaxDepth
+
 type MoveStack interface {
 	Pop() Move
 	Push(Move)
