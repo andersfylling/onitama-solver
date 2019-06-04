@@ -131,10 +131,11 @@ func SearchExhaustive(cards []Card, targetDepth uint64) (metrics []DepthMetric, 
 			continue
 		}
 		st.GenerateMoves()
+		currentDepth := st.Depth() + 1
 
 		buildtag.Onitama_metrics(func() { // build tag "onitama_metrics"
 			// populate game metrics for the cached entries
-			cdepth := int(st.Depth() + 1)
+			cdepth := int(currentDepth)
 			metric := createMetric(cdepth, st.NextPlayer(), st.Moves())
 			metrics[cdepth].Increment(&metric)
 
@@ -143,7 +144,7 @@ func SearchExhaustive(cards []Card, targetDepth uint64) (metrics []DepthMetric, 
 			})
 		})
 
-		if st.Depth()+1 >= targetDepth {
+		if currentDepth >= targetDepth {
 			st.UndoMove()
 		} else {
 			stack.Push(MoveUndo) // identify a new depth
@@ -151,7 +152,15 @@ func SearchExhaustive(cards []Card, targetDepth uint64) (metrics []DepthMetric, 
 			for i := range st.Moves() {
 				if (st.Moves()[i] & (1 << 12)) > 0 {
 					anyWins = true
-					break
+					path := make([]Move, currentDepth)
+					for m := uint64(1); m <= st.Depth(); m++ {
+						if st.previousMoves[m] == 0 {
+							break
+						}
+						path[m-1] = st.previousMoves[m]
+					}
+					path[currentDepth-1] = st.Moves()[i]
+					winPaths = append(winPaths, path)
 				}
 			}
 			if !anyWins {

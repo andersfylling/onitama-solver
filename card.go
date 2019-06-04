@@ -2,7 +2,6 @@ package onitamago
 
 import (
 	"math/rand"
-	"strconv"
 	"time"
 )
 
@@ -173,6 +172,14 @@ const (
 // //go:generate stringer -type=Card
 type Card Bitboard
 
+func (c Card) Name() string {
+	if str, ok := _Card_map[c]; ok {
+		return str
+	}
+
+	panic("no such card")
+}
+
 func (c Card) Bitboard() Bitboard {
 	return Bitboard(c)
 }
@@ -266,27 +273,20 @@ func DrawCards() (selection []Card) {
 const _Card_name = "RabbitCobraRoosterCraneOxHorseBoarCrabEelGooseFrogMantisMonkeyElephantDragonTiger"
 
 var _Card_map = map[Card]string{
-	4547854970388480:    _Card_name[0:6],
-	4609221463113728:    _Card_name[6:11],
-	4627019807588352:    _Card_name[11:18],
-	9042727224213504:    _Card_name[18:23],
-	9060113251827712:    _Card_name[23:25],
-	9112889809960960:    _Card_name[25:30],
-	9130344557051904:    _Card_name[30:34],
-	9191917208207360:    _Card_name[34:38],
-	18067449945522176:   _Card_name[38:41],
-	18137612531269632:   _Card_name[41:46],
-	18190389089402880:   _Card_name[46:50],
-	22553319947894784:   _Card_name[50:56],
-	22553526106324992:   _Card_name[56:62],
-	22641143439163392:   _Card_name[62:70],
-	38316124802121728:   _Card_name[70:76],
-	2305878331024736256: _Card_name[76:81],
-}
-
-func CardName(card Card) string {
-	if str, ok := _Card_map[card]; ok {
-		return str
-	}
-	return "Card(" + strconv.FormatInt(int64(card), 10) + ")"
+	Rabbit:   _Card_name[0:6],
+	Cobra:    _Card_name[6:11],
+	Rooster:  _Card_name[11:18],
+	Crane:    _Card_name[18:23],
+	Ox:       _Card_name[23:25],
+	Horse:    _Card_name[25:30],
+	Boar:     _Card_name[30:34],
+	Crab:     _Card_name[34:38],
+	Eel:      _Card_name[38:41],
+	Goose:    _Card_name[41:46],
+	Frog:     _Card_name[46:50],
+	Mantis:   _Card_name[50:56],
+	Monkey:   _Card_name[56:62],
+	Elephant: _Card_name[62:70],
+	Dragon:   _Card_name[70:76],
+	Tiger:    _Card_name[76:81],
 }

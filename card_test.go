@@ -23,3 +23,16 @@ func TestRotateCard(t *testing.T) {
 
 	check(t, got, wants)
 }
+
+func TestCard_Name(t *testing.T) {
+
+	cards := []Card{
+		Rooster, Rabbit, Ox, Cobra,
+		Horse, Goose, Frog, Eel,
+		Tiger, Dragon, Crab, Elephant, Monkey, Mantis, Crane, Boar,
+	}
+
+	for _, card := range cards {
+		card.Name()
+	}
+}

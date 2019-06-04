@@ -172,7 +172,7 @@ func (st State) String() string {
 		split := strings.Split(tmp, "")
 		indexed += " " + strings.Join(split, " ")
 		if i == 2 {
-			indexed += "  " + CardName(st.suspendedCard)
+			indexed += "  " + st.suspendedCard.Name()
 		}
 		indexed += "\n"
 	}
@@ -182,7 +182,7 @@ func (st State) String() string {
 	var formatted string
 	brownIndex = BrownPlayer * NrOfPlayerCards
 	for i := 0; i < NrOfPlayerCards; i++ {
-		formatted += CardName(st.playerCards[int(brownIndex)+i]) + ", "
+		formatted += st.playerCards[int(brownIndex)+i].Name() + ", "
 	}
 
 	// add the pieces
@@ -190,7 +190,7 @@ func (st State) String() string {
 
 	blueIndex = BluePlayer * NrOfPlayerCards
 	for i := 0; i < NrOfPlayerCards; i++ {
-		formatted += CardName(st.playerCards[int(blueIndex)+i]) + ", "
+		formatted += st.playerCards[int(blueIndex)+i].Name() + ", "
 	}
 
 	return formatted + "\n----------------\n"

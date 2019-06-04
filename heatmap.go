@@ -40,7 +40,7 @@ func (b *BitboardHeatmap) add(board Bitboard) {
 			}
 		}
 	}
-	b.clearMiddle()
+	//b.clearMiddle()
 }
 
 func (b *BitboardHeatmap) Merge(m *BitboardHeatmap) {
@@ -49,10 +49,10 @@ func (b *BitboardHeatmap) Merge(m *BitboardHeatmap) {
 			b[y][x] += m[y][x]
 		}
 	}
-	b.clearMiddle()
+	//b.clearMiddle()
 }
 
-func (b *BitboardHeatmap) render(opacity float64) (img *image.NRGBA) {
+func (b *BitboardHeatmap) render(opacity float64, isCard bool) (img *image.NRGBA) {
 	const H = 25 * 8
 	const W = H
 	const DotSize = H / len(b)
@@ -66,8 +66,10 @@ func (b *BitboardHeatmap) render(opacity float64) (img *image.NRGBA) {
 		}
 	}
 
-	piece := imaging.New(DotSize, DotSize, color.NRGBA{255, 255, 10, 255})
-	img = imaging.Overlay(img, piece, image.Pt(2*DotSize, 2*DotSize), 1)
+	if isCard {
+		piece := imaging.New(DotSize, DotSize, color.NRGBA{255, 255, 10, 255})
+		img = imaging.Overlay(img, piece, image.Pt(2*DotSize, 2*DotSize), 1)
+	}
 
 	lineColor := color.NRGBA{50, 50, 50, 255}
 	verticalLine := imaging.New(1, H, lineColor)
@@ -80,10 +82,18 @@ func (b *BitboardHeatmap) render(opacity float64) (img *image.NRGBA) {
 	return img
 }
 
-func (b *BitboardHeatmap) Render() (img *image.NRGBA) {
-	return b.render(0.2)
+func (b *BitboardHeatmap) Render(options ...interface{}) (img *image.NRGBA) {
+	opacity := 0.2
+	if len(options) > 0 {
+		opacity = options[0].(float64)
+	}
+	isCard := false
+	if len(options) > 1 {
+		isCard = options[1].(bool)
+	}
+	return b.render(opacity, isCard)
 }
 
 func (b *BitboardHeatmap) RenderOneCard() (img *image.NRGBA) {
-	return b.render(1)
+	return b.render(1, true)
 }

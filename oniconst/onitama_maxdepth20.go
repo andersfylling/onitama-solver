@@ -1,6 +1,6 @@
-// +build onitama_maxdepth20,!onitama_maxdepth40
+// +build onitama_maxdepth20,!onitama_maxdepth15,!onitama_maxdepth40
 
 package oniconst
 
-// default: 15
+// default: 10
 const MaxDepth = 20

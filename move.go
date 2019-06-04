@@ -152,5 +152,5 @@ func explainMove(m Move, playerIndex BitboardPos, cardsBeforeMove []Card) string
 		winner = ", WINNER"
 	}
 
-	return piece + "{" + BoardPos(col1, row1) + " => " + BoardPos(col2, row2) + ", " + CardName(card) + "}" + winner
+	return piece + "{" + BoardPos(col1, row1) + " => " + BoardPos(col2, row2) + ", " + card.Name() + "}" + winner
 }

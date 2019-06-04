@@ -69,9 +69,9 @@ func TestRandomSampling(t *testing.T) {
 	if st.String() != stCopy.String() {
 		var cards string
 		for i := range stCopy.playerCards {
-			cards += CardName(stCopy.playerCards[i]) + ", "
+			cards += stCopy.playerCards[i].Name() + ", "
 		}
-		cards += CardName(stCopy.suspendedCard)
+		cards += stCopy.suspendedCard.Name()
 		t.Errorf("apply and undo move create different roots. Card config: %s\n", cards)
 		fmt.Println(st)
 		fmt.Println(stCopy)
