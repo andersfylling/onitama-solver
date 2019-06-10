@@ -6,6 +6,33 @@ import (
 	"testing"
 )
 
+func TestState_GenerateMoves_Pass(t *testing.T) {
+	cards := CardConfig([2]Card{Tiger, Ox}, [2]Card{Horse, Crane}, Dragon)
+	st := State{}
+	st.CreateGame(cards)
+
+	// move all blue pieces to the right lane
+	st.board[NrOfPieceTypes*BluePlayer+StudentsIndex] = 0x20200020200
+	st.board[NrOfPieceTypes*BluePlayer+MasterIndex] = 0x2000000
+
+	// remove brown piece that is in the way
+	st.board[NrOfPieceTypes*BrownPlayer+StudentsIndex] ^= 0x20000000000
+
+	// This creates a situation where the blue player can not move any pieces and must call pass
+	st.GenerateMoves()
+	if st.generatedMovesLen != 2 {
+		t.Error("expected there to be exactly 2 moves")
+	}
+
+	for i := 0; i < st.generatedMovesLen; i++ {
+		move := st.generatedMoves[i]
+		if !IsPassMove(move) {
+			desc := explainMove(st.generatedMoves[i], BluePlayer, cards)
+			t.Errorf("expected move to be a pass move, got %d, description %s", move, desc)
+		}
+	}
+}
+
 func TestState_GenerateMoves_Winner(t *testing.T) {
 	st := NewState()
 	st.CreateGame([]Card{
@@ -41,7 +68,7 @@ func TestRandomSampling(t *testing.T) {
 
 	var moves []Move
 	//fmt.Println(st)
-	for i := 0; i < MaxDepth; i++ {
+	for i := 0; i < MaxDepth-1; i++ {
 		st.GenerateMoves()
 		if st.generatedMovesLen == 0 {
 			break

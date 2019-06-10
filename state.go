@@ -74,6 +74,10 @@ func (st *State) Reset() {
 	st.currentDepth = 0
 }
 
+func (st *State) MoveHistory() []Move {
+	return st.previousMoves[1 : st.Depth()+1]
+}
+
 func (st *State) cleanTrashBoards() {
 	st.board[(NrOfPieceTypes*BluePlayer)+TrashIndex] = 0
 	st.board[(NrOfPieceTypes*BrownPlayer)+TrashIndex] = 0
@@ -206,6 +210,10 @@ func (st *State) GenerateMoves() {
 	generateMoves(st)
 }
 
+// CreateGame
+//  cards[0-1]: brown player (opponent)
+//  cards[2-3]: blue player (current)
+//  cards[4-4]: idle card
 func (st *State) CreateGame(cards []Card) {
 	if len(cards) == 0 {
 		cards = DrawCards() // random cards
@@ -214,9 +222,10 @@ func (st *State) CreateGame(cards []Card) {
 	for i := range cards {
 		st.cards[i] = cards[i]
 	}
+
+	// organize cards
 	st.otherPlayer = BrownPlayer
 	st.activePlayer = BluePlayer
-
 	for i := Number(0); i < 2; i++ {
 		brownIndex := NrOfPlayerCards*st.otherPlayer + i
 		blueIndex := NrOfPlayerCards*st.activePlayer + i
@@ -225,10 +234,17 @@ func (st *State) CreateGame(cards []Card) {
 	}
 	st.suspendedCard = cards[len(cards)-1]
 
+	// clear boards
+	for i := range st.temples {
+		st.temples[i] = 0
+	}
+	for i := range st.board {
+		st.board[i] = 0
+	}
+
+	// set up pieces and temples
 	st.temples[st.otherPlayer] = TempleTop
 	st.temples[st.activePlayer] = TempleBottom
-
-	// populate board with pieces
 	st.board[st.otherPlayer*NrOfPieceTypes+MasterIndex] = MasterTop
 	st.board[st.otherPlayer*NrOfPieceTypes+StudentsIndex] = StudentsTop
 	st.board[st.activePlayer*NrOfPieceTypes+MasterIndex] = MasterBottom

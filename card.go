@@ -237,14 +237,27 @@ func (c *Card) Rotate() {
 	}
 }
 
-// TODO: colours
-
-func DrawCards() (selection []Card) {
-	cards := []Card{
+func Deck() []Card {
+	return []Card{
 		Rooster, Rabbit, Ox, Cobra,
 		Horse, Goose, Frog, Eel,
 		Tiger, Dragon, Crab, Elephant, Monkey, Mantis, Crane, Boar,
 	}
+}
+
+// CardConfig create a card configuration with awareness of which players holds which cards
+// and what the idle card is.
+func CardConfig(blue [2]Card, brown [2]Card, idle Card) []Card {
+	return []Card{
+		brown[0], brown[1],
+		blue[0], blue[1],
+		idle,
+	}
+}
+
+// DrawCards draws five random cards from the original 16 card deck
+func DrawCards() (selection []Card) {
+	cards := Deck()
 
 	selection = make([]Card, 0, NrOfActiveCards)
 

@@ -1,6 +1,18 @@
 package onitamago
 
-import "math/bits"
+import (
+	"math/bits"
+	"strings"
+)
+
+func ExplainCardSlice(cards []Card) string {
+	b := strings.Builder{}
+	for i := range cards {
+		b.WriteString(cards[i].Name() + ", ")
+	}
+
+	return b.String()[:b.Len()-2]
+}
 
 func CreateRunes(char rune, length int) []rune {
 	runes := make([]rune, 0, length)
@@ -90,4 +102,19 @@ func boardIndexToBoard(i BitboardPos) Bitboard {
 
 func BoardToIndex(x Bitboard) BitboardPos {
 	return LSB(x)
+}
+
+//go:inline
+func CurrentMasterBitboard(st *State) Bitboard {
+	return st.board[st.activePlayer*NrOfPieceTypes+MasterIndex]
+}
+
+//go:inline
+func OtherMasterBitboard(st *State) Bitboard {
+	return st.board[st.otherPlayer*NrOfPieceTypes+MasterIndex]
+}
+
+//go:inline
+func OtherPiecesBitboard(st *State) Bitboard {
+	return st.board[st.otherPlayer*NrOfPieceTypes+MasterIndex] | st.board[st.otherPlayer*NrOfPieceTypes+StudentsIndex]
 }

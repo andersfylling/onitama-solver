@@ -49,6 +49,10 @@ func TestMove_MoveWin(t *testing.T) {
 
 	// if the first action bit is set, it means that a template or master was taken.
 	// regardless of the other bits. 0 = have not won, 1 = win
-	assert.EqualValues(t, f(0), 0)
-	assert.EqualValues(t, f(1), 1)
+	assert.EqualValues(t, f(0), 0, 0)
+	assert.EqualValues(t, f(1), 1, 1)
+	assert.EqualValues(t, f(3), 1, 2)
+	// assert.EqualValues(t, f(5), 0, 5)
+	// action with value 5, should never happen.
+	assert.EqualValues(t, f(7), 1, 7)
 }

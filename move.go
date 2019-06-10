@@ -7,6 +7,14 @@ type MoveAction = Bitboard
 // may it be to go backwards in a game tree or for other reasons.
 const MoveUndo = ^Move(0)
 
+// MovePassBase is the base to build a pass move.
+// A Pass move is simply a normal move where the master piece,
+// the piece that will always exist when a player can move, has the same
+// from as to value; meaning they do not relocate.
+// The card index must be set. Since you must create a pass situation for each card
+// there must exist at least two pass moves when _no_ normal move can be executed.
+const MovePassBase Move = 2 << 12 // action: master move
+
 const MovePositionMask Move = 0x3f
 const MoveMaskTo Move = MovePositionMask << 0
 const MoveMaskFrom Move = MovePositionMask << 6
@@ -35,7 +43,7 @@ func getMoveFrom(m Move) BitboardPos {
 }
 
 func setMoveAction(m Move, action MoveAction) Move {
-	action = 7 & action // 0b0111 & 0bxxxx
+	action = 7 & action // 0b111 & 0bxxx
 	action = action << 12
 	return m | Move(action)
 }
@@ -85,6 +93,14 @@ func getMoveCardIndex(m Move) BitboardPos {
 	return BitboardPos(m&MoveMaskCardIndex) >> 15
 }
 
+func IsPassMove(m Move) bool {
+	action := getMoveAction(m)
+	from := getMoveFrom(m)
+	to := getMoveTo(m)
+
+	return action == 2 && from == to
+}
+
 func encodeMove(st *State, fromIndex, toIndex, cardIndex BitboardPos) (move Move) {
 	move = resetMove(move) // in case code gets change, and re-used populated bits later on
 
@@ -99,25 +115,32 @@ func encodeMove(st *State, fromIndex, toIndex, cardIndex BitboardPos) (move Move
 	move = setMoveTo(move, toIndex)
 
 	///////////////////
-	// Action
+	// Action - Moved piece type
+	//  If it's not master, then student
 	///////////////////
-	// mark the win bit if the temple or a master is taken
-	win := st.temples[st.otherPlayer] >> toIndex
-	win |= st.board[st.otherPlayer*NrOfPieceTypes+MasterIndex] >> toIndex
-	win &= 1 // filter out unwanted bits
-
-	// set which piece type was moved
-	master := st.board[st.activePlayer*NrOfPieceTypes+MasterIndex] >> fromIndex
+	master := CurrentMasterBitboard(st) >> fromIndex
 	master &= 1 // filter out unwanted bits
 
-	// weakAttack regards attacks that kills no student, nor master.
-	attack := st.board[st.otherPlayer*NrOfPieceTypes+StudentsIndex] | st.board[st.otherPlayer*NrOfPieceTypes+MasterIndex]
-	attack = attack >> toIndex
-	attack &= 1                   // filter out unwanted bits
-	noAttack := 4 ^ (attack << 2) // 0b100 ^ (0b001 << 2) == 0 or 0b100 ^ (0b000 << 2) == 0b100
+	///////////////////
+	// Action - Pacifist move
+	///////////////////
+	attack := OtherPiecesBitboard(st) >> toIndex
+	attack &= 1            // filter out unwanted bits. Redundant!
+	pacifist := 1 ^ attack // 0b01 ^ 0b001 == 0 or 0b001 ^ 0b000 == 0b001
 
-	// merge actions
-	action := noAttack | (master << 1) | win
+	///////////////////
+	// Action - Master took temple
+	///////////////////
+	win := (st.temples[st.otherPlayer] >> toIndex) & master
+
+	///////////////////
+	// Action - Defeated Master
+	///////////////////
+	win |= OtherMasterBitboard(st) >> toIndex
+	win &= 1 // filter out unwanted bits
+
+	// Action merge
+	action := (pacifist << 2) | (master << 1) | win
 	move = setMoveAction(move, action)
 
 	///////////////////
@@ -152,5 +175,10 @@ func explainMove(m Move, playerIndex BitboardPos, cardsBeforeMove []Card) string
 		winner = ", WINNER"
 	}
 
-	return piece + "{" + BoardPos(col1, row1) + " => " + BoardPos(col2, row2) + ", " + card.Name() + "}" + winner
+	var pass string
+	if IsPassMove(m) {
+		pass = " (pass)"
+	}
+
+	return piece + "{" + BoardPos(col1, row1) + " => " + BoardPos(col2, row2) + ", " + card.Name() + "}" + winner + pass
 }

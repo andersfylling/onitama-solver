@@ -40,6 +40,20 @@ func generateMoves(st *State) (moveIndex Number) {
 		}
 	}
 
+	// No moves could be generated. But the player must swap card
+	if moveIndex == 0 {
+		bb := CurrentMasterBitboard(st)
+		from := LSB(bb)
+
+		m := MovePassBase
+		m = setMoveFrom(m, from)
+		m = setMoveTo(m, from)
+
+		st.generatedMoves[0] = m
+		st.generatedMoves[1] = setMoveCardIndex(m, 1)
+		moveIndex = 2
+	}
+
 	st.generatedMovesLen = int(moveIndex)
 	return moveIndex
 }

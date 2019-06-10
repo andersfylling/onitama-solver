@@ -1,4 +1,6 @@
 package buildtag
 
-type fOnitama_metrics func(cb func())
-type fOnitama_cache func(cb func())
+type callback func(cb func())
+type fOnitama_metrics = callback
+type fOnitama_metrics_infinity = callback
+type fOnitama_cache = callback
