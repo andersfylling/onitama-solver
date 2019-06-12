@@ -64,7 +64,7 @@ func main() {
 	for _, cards := range cardsSlice {
 		fmt.Println("---------------------------------")
 		for _, card := range cards {
-			fmt.Print(onitamago.CardName(card) + ",")
+			fmt.Print(card.Name() + ",")
 		}
 		fmt.Println("")
 
@@ -78,7 +78,7 @@ func main() {
 func printStatus(result *perftInfo) {
 	fmt.Println("---------------------------------")
 	for _, card := range result.cards {
-		fmt.Print(onitamago.CardName(card) + ",")
+		fmt.Print(card.Name() + ",")
 	}
 	fmt.Println("")
 	fmt.Println("perft", result.depth, result.depth)

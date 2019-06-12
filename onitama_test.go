@@ -26,9 +26,10 @@ func TestState_GenerateMoves_Pass(t *testing.T) {
 
 	for i := 0; i < st.generatedMovesLen; i++ {
 		move := st.generatedMoves[i]
-		if !IsPassMove(move) {
-			desc := explainMove(st.generatedMoves[i], BluePlayer, cards)
-			t.Errorf("expected move to be a pass move, got %d, description %s", move, desc)
+		if !move.Pass() {
+			desc := move.String()
+			cardName := move.Card(BluePlayer, cards).Name()
+			t.Errorf("expected move to be a pass move, got %d, description %s, card %s", move, desc, cardName)
 		}
 	}
 }

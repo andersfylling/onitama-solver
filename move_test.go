@@ -6,9 +6,10 @@ import (
 )
 
 func TestMove_MoveFriendlyBoardIndex(t *testing.T) {
-	var f = func(action MoveAction) BitboardPos {
-		move := setMoveAction(0, action)
-		return getMoveFriendlyBoardIndex(move)
+	var f = func(action Number) BitboardPos {
+		var m Move
+		m.addAction(action)
+		return m.BoardIndex()
 	}
 
 	// find the piece that is being moved.
@@ -24,9 +25,10 @@ func TestMove_MoveFriendlyBoardIndex(t *testing.T) {
 }
 
 func TestMove_MoveHostileBoardIndex(t *testing.T) {
-	var f = func(action MoveAction) BitboardPos {
-		move := setMoveAction(0, action)
-		return getMoveHostileBoardIndex(move)
+	var f = func(action Number) BitboardPos {
+		var m Move
+		m.addAction(action)
+		return m.HostileBoardIndex()
 	}
 
 	// find hostile piece being attacked/destroyed.
@@ -42,17 +44,18 @@ func TestMove_MoveHostileBoardIndex(t *testing.T) {
 }
 
 func TestMove_MoveWin(t *testing.T) {
-	var f = func(action MoveAction) BitboardPos {
-		move := setMoveAction(0, action)
-		return getMoveWin(move)
+	var f = func(action Number) bool {
+		var m Move
+		m.addAction(action)
+		return m.Win()
 	}
 
 	// if the first action bit is set, it means that a template or master was taken.
 	// regardless of the other bits. 0 = have not won, 1 = win
-	assert.EqualValues(t, f(0), 0, 0)
-	assert.EqualValues(t, f(1), 1, 1)
-	assert.EqualValues(t, f(3), 1, 2)
+	assert.EqualValues(t, f(0), false, 0)
+	assert.EqualValues(t, f(1), true, 1)
+	assert.EqualValues(t, f(3), true, 2)
 	// assert.EqualValues(t, f(5), 0, 5)
 	// action with value 5, should never happen.
-	assert.EqualValues(t, f(7), 1, 7)
+	assert.EqualValues(t, f(7), true, 7)
 }

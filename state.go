@@ -272,15 +272,15 @@ func (st *State) UndoMove() {
 	st.currentDepth--
 
 	// adjust for the player offset
-	cardIndex := NrOfPlayerCards*st.activePlayer + getMoveCardIndex(move)
+	cardIndex := NrOfPlayerCards*st.activePlayer + move.CardIndex()
 	st.swapCard(cardIndex)
 
 	// update boards
-	from := getMoveFrom(move)
-	to := getMoveTo(move)
+	from := move.From()
+	to := move.To()
 
-	friendlyBoardIndex := getMoveFriendlyBoardIndex(move)
-	hostileBoardIndex := getMoveHostileBoardIndex(move)
+	friendlyBoardIndex := move.BoardIndex()
+	hostileBoardIndex := move.HostileBoardIndex()
 
 	st.board[st.activePlayer*NrOfPieceTypes+friendlyBoardIndex] ^= boardIndexToBoard(from) | boardIndexToBoard(to)
 	st.board[st.otherPlayer*NrOfPieceTypes+hostileBoardIndex] |= boardIndexToBoard(to)
@@ -289,12 +289,12 @@ func (st *State) UndoMove() {
 }
 
 func (st *State) ApplyMove(move Move) {
-	from := getMoveFrom(move)
-	to := getMoveTo(move)
+	from := move.From()
+	to := move.To()
 
-	st.hasWon = getMoveWin(move) == 0x1
-	friendlyBoardIndex := getMoveFriendlyBoardIndex(move)
-	hostileBoardIndex := getMoveHostileBoardIndex(move)
+	st.hasWon = move.Win()
+	friendlyBoardIndex := move.BoardIndex()
+	hostileBoardIndex := move.HostileBoardIndex()
 
 	// update boards
 	st.board[st.activePlayer*NrOfPieceTypes+friendlyBoardIndex] ^= boardIndexToBoard(from) | boardIndexToBoard(to)
@@ -305,7 +305,7 @@ func (st *State) ApplyMove(move Move) {
 	st.previousMoves[st.currentDepth] = move
 
 	// adjust for the player offset
-	cardIndex := NrOfPlayerCards*st.activePlayer + getMoveCardIndex(move)
+	cardIndex := NrOfPlayerCards*st.activePlayer + move.CardIndex()
 	st.swapCard(cardIndex)
 	st.changePlayer()
 }

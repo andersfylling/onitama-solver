@@ -64,11 +64,10 @@ func SearchExhaustive(cards []Card, targetDepth uint64) (metrics []DepthMetric, 
 		return nil, nil, 0
 	}
 	stack := Stack{}
-
 	st := State{}
 	st.CreateGame(cards)
 
-	winPaths = make([][]Move, 0, 1000*(targetDepth*targetDepth))
+	winPaths = make([][]Move, 0, 1000*(targetDepth*targetDepth*targetDepth))
 
 	// caching - use build tag onitama_cache
 	cache := onitamaCache{}

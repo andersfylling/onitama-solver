@@ -17,7 +17,7 @@ func TestMustSayPass(t *testing.T) {
 	generateMergeCards := func(cards []onitamago.Card) (merged []onitamago.Card) {
 		for i := range cards {
 			for j := i + 1; j < len(cards); j++ {
-				merged = append(merged, cards[i] | cards[j])
+				merged = append(merged, cards[i]|cards[j])
 			}
 		}
 
@@ -30,10 +30,10 @@ func TestMustSayPass(t *testing.T) {
 	board := onitamago.Bitboard(0x200)
 	for i := onitamago.Bitboard(0); i < 5; i++ {
 		for j := onitamago.Bitboard(0); j < 5; j++ {
-			bb := (board << i) << (8*j)
+			bb := (board << i) << (8 * j)
 
 			for _, card := range mergedCards {
-				if ((bb | card.Bitboard()) & onitamago.BoardMask) ^ bb == 0 {
+				if ((bb|card.Bitboard())&onitamago.BoardMask)^bb == 0 {
 					panic("crap")
 				}
 			}

@@ -1,8 +1,5 @@
 package onitamago
 
-type Move = uint16
-type MoveAction = Bitboard
-
 // TypeUndoMove can be used to signify the state should undo the current move
 // may it be to go backwards in a game tree or for other reasons.
 const MoveUndo = ^Move(0)
@@ -21,98 +18,62 @@ const MoveMaskFrom Move = MovePositionMask << 6
 const MoveMaskAction Move = 0x7 << 12
 const MoveMaskCardIndex Move = 0x1 << 15
 
-// resetMove always call this before starting to write content to a move
-func resetMove(m Move) Move {
-	return 0
+// Move holds from, to, actions, the player, and which card index was used.
+type Move uint16
+
+func (m *Move) Reset() {
+	*m = 0
 }
 
-func setMoveTo(m Move, pos BitboardPos) Move {
-	return m | Move(pos)
-}
-
-func getMoveTo(m Move) BitboardPos {
+func (m Move) To() BitboardPos {
 	return BitboardPos(m & MoveMaskTo)
 }
 
-func setMoveFrom(m Move, pos BitboardPos) Move {
-	return m | Move(pos<<6)
+func (m Move) From() BitboardPos {
+	return BitboardPos(m&MoveMaskFrom) >> 6
 }
 
-func getMoveFrom(m Move) BitboardPos {
-	return BitboardPos((m & MoveMaskFrom) >> 6)
+func (m Move) Action() Number {
+	return BitboardPos(m&MoveMaskAction) >> 12
 }
 
-func setMoveAction(m Move, action MoveAction) Move {
-	action = 7 & action // 0b111 & 0bxxx
-	action = action << 12
-	return m | Move(action)
+func (m Move) Win() bool {
+	return (m.Action() & 1) == 1
 }
 
-func getMoveWin(m Move) BitboardPos {
-	return BitboardPos(getMoveAction(m) & 1)
+func (m Move) Pass() bool {
+	return m.Action() == 2 && m.From() == m.To()
 }
 
-func getMoveFriendlyBoardIndex(m Move) BitboardPos {
-	action := getMoveAction(m)
-	return BitboardPos((action & 2) >> 1)
+func (m Move) PieceType() Piece {
+	return Piece((m.Action() & 2) >> 1) // Master == 1, Student == 0
 }
 
-func getMoveHostileBoardIndex(m Move) BitboardPos {
-	action := getMoveAction(m)
+func (m Move) BoardIndex() Number {
+	return Number(m.PieceType())
+}
+
+func (m Move) HostileBoardIndex() Number {
+	action := m.Action()
 	master := action & 1
 	temple := action & 4
-	return BitboardPos((temple >> 1) | (((temple >> 2) | master) ^ (temple >> 2)))
+	return (temple >> 1) | (((temple >> 2) | master) ^ (temple >> 2)) // TODO: simplify
 }
 
-// getMoveActionAttackedPieceBoard if a piece was attacked, this returns the
-// board where the related bit is set.
-// This should be used together with getMoveHostileBoardIndex to handle
-// temple attacks.
-func getMoveActionAttackedPieceBoard(m Move) Bitboard {
-	action := getMoveAction(m)
-	if (action & 4) > 0 {
-		return 0
-	}
-
-	return boardIndexToBoard(getMoveTo(m))
+func (m Move) CardIndex() Number {
+	return Number(m&MoveMaskCardIndex) >> 15
 }
 
-func getMoveAction(m Move) Move {
-	return (m & MoveMaskAction) >> 12
-}
-
-func getPieceMoved(m Move) Piece {
-	return Piece(getMoveFriendlyBoardIndex(m)) // Master == 1, Student == 0
-}
-
-func setMoveCardIndex(m Move, index BitboardPos) Move {
-	return m | Move(index<<15)
-}
-
-func getMoveCardIndex(m Move) BitboardPos {
-	return BitboardPos(m&MoveMaskCardIndex) >> 15
-}
-
-func IsPassMove(m Move) bool {
-	action := getMoveAction(m)
-	from := getMoveFrom(m)
-	to := getMoveTo(m)
-
-	return action == 2 && from == to
-}
-
-func encodeMove(st *State, fromIndex, toIndex, cardIndex BitboardPos) (move Move) {
-	move = resetMove(move) // in case code gets change, and re-used populated bits later on
-
+func (m *Move) Encode(st *State, fromIndex, toIndex, cardIndex BitboardPos) {
 	///////////////////
 	// From
 	///////////////////
-	move = setMoveFrom(move, fromIndex)
+	m.addFrom(fromIndex)
 
 	///////////////////
 	// To
 	///////////////////
-	move = setMoveTo(move, toIndex)
+	m.addTo(toIndex)
 
 	///////////////////
 	// Action - Moved piece type
@@ -141,44 +102,82 @@ func encodeMove(st *State, fromIndex, toIndex, cardIndex BitboardPos) (move Move
 
 	// Action merge
 	action := (pacifist << 2) | (master << 1) | win
-	move = setMoveAction(move, action)
+	m.addAction(action)
 
 	///////////////////
 	// Card Selection
 	// -> relative to current state. Card is either 0 or 1
 	///////////////////
-	move = setMoveCardIndex(move, cardIndex)
-
-	return move
+	m.addCardIndex(cardIndex)
 }
 
-func explainMove(m Move, playerIndex BitboardPos, cardsBeforeMove []Card) string {
-	from := bitboardIndexToOnitamaIndex(getMoveFrom(m))
-	to := bitboardIndexToOnitamaIndex(getMoveTo(m))
+func (m *Move) addTo(p BitboardPos) {
+	*m |= Move(p)
+}
+
+func (m *Move) addFrom(p BitboardPos) {
+	*m |= Move(p << 6)
+}
+
+func (m *Move) addAction(a Number) {
+	a = 7 & a // 0b111 & 0bxxx
+	a = a << 12
+	*m |= Move(a)
+}
+
+func (m *Move) addCardIndex(i BitboardPos) {
+	*m |= Move(i) << 15
+}
+
+func (m Move) String() string {
+	from := bitboardIndexToOnitamaIndex(m.From())
+	to := bitboardIndexToOnitamaIndex(m.To())
 
 	row1 := from / 5
 	col1 := 4 - (from % 5) // reversed, due to string
 	row2 := to / 5
 	col2 := 4 - (to % 5) // reversed, due to string
 
-	card := cardsBeforeMove[playerIndex*NrOfPlayerCards+getMoveCardIndex(m)]
-
 	var piece string
-	if getPieceMoved(m) == Master {
+	if m.PieceType() == Master {
 		piece = "master"
 	} else {
 		piece = "student"
 	}
 
 	var winner string
-	if getMoveWin(m) == 1 {
+	if m.Win() {
 		winner = ", WINNER"
 	}
 
 	var pass string
-	if IsPassMove(m) {
+	if m.Pass() {
 		pass = " (pass)"
 	}
 
-	return piece + "{" + BoardPos(col1, row1) + " => " + BoardPos(col2, row2) + ", " + card.Name() + "}" + winner + pass
+	return piece + "{" + BoardPos(col1, row1) + " => " + BoardPos(col2, row2) + "}" + winner + pass
+}
+
+func (m Move) Card(playerIndex Number, cardsBeforeMove []Card) Card {
+	i := playerIndex*NrOfPlayerCards + m.CardIndex()
+	return cardsBeforeMove[i]
+}
+
+// getMoveActionAttackedPieceBoard if a piece was attacked, this returns the
+// board where the related bit is set.
+// This should be used together with getMoveHostileBoardIndex to handle
+// temple attacks.
+// func getMoveActionAttackedPieceBoard(m Move) Bitboard {
+// 	action := getMoveAction(m)
+// 	if (action & 4) > 0 {
+// 		return 0
+// 	}
+//
+// 	return boardIndexToBoard(getMoveTo(m))
+// }
+
+// deprecated
+func encodeMove(st *State, fromIndex, toIndex, cardIndex BitboardPos) (m Move) {
+	m.Encode(st, fromIndex, toIndex, cardIndex)
+	return
 }
