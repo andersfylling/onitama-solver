@@ -1,6 +1,6 @@
 package onitamago
 
-type Piece = Move // to simplify move extraction
+type Piece uint8 // to simplify move extraction
 
 const (
 	NrOfPieceTypes   uint64 = 3 // student, master, temple. temples cannot move

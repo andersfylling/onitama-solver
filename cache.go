@@ -2,10 +2,10 @@
 
 package onitamago
 
-// The performance elbow is at depth 7 or 8.
+// The performance elbow is at Depth 7 or 8.
 // However, the delta from 7 to 8 is around -560%.
-// As depth 7 is from 250-700ms, this seems like the most
-// significant jump in depth time. Therefore we do not
+// As Depth 7 is from 250-700ms, this seems like the most
+// significant jump in Depth time. Therefore we do not
 // cache sub-trees with a height less than 7, as this
 // requires extra loop time and slows down the application
 // more than I've found the cache to help.

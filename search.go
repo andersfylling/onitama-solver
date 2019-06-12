@@ -3,13 +3,15 @@ package onitamago
 import (
 	"fmt"
 	"github.com/andersfylling/onitamago/buildtag"
+	"github.com/andersfylling/onitamago/oniconst"
+
 	"time"
 )
 
 func nextMove(stack *Stack, st *State) (move Move, ok bool) {
 	if move = stack.Pop(); move == MoveUndo {
 		// finished processing node children will yield a skip move
-		// to signify we need to go one depth back up
+		// to signify we need to go one Depth back up
 		for ; move == MoveUndo && stack.Size() > 0; move = stack.Pop() {
 			st.UndoMove()
 		}
@@ -31,7 +33,7 @@ func createMetric(depth, activePlayer int, moves []Move) (metric DepthMetric) {
 		GeneratedMoves: uint64(len(moves)),
 	}
 
-	// TODO: win paths
+	// TODO: win Paths
 	var actions Move
 	for _, move := range moves {
 		actions = 0
@@ -53,21 +55,28 @@ func createMetric(depth, activePlayer int, moves []Move) (metric DepthMetric) {
 	return metric
 }
 
-// SearchExhaustive uses depth first search to goes through the
+type moveNode struct {
+	Instances uint
+	Depth     uint
+	Paths     map[Move]*moveNode
+}
+
+// SearchExhaustive uses Depth first search to goes through the
 // entire game tree generated from the card configuration until
-// the target depth is reached.
+// the target Depth is reached.
 // However, when a parent generates children moves that causes a win,
 // that parent branch is no longer explored as it's assumed the player
 // prioritizes a win instead of continuing the game.
-func SearchExhaustive(cards []Card, targetDepth uint64) (metrics []DepthMetric, winPaths [][]Move /*infinityPaths [][]Move,*/, duration time.Duration) {
+//
+// Build tags
+// - onitama_store_wins will populate winPaths
+func SearchExhaustive(cards []Card, targetDepth uint64) (metrics []DepthMetric, winPaths *moveNode /*infinityPaths [][]Move,*/, duration time.Duration) {
 	if targetDepth == 0 {
 		return nil, nil, 0
 	}
 	stack := Stack{}
 	st := State{}
 	st.CreateGame(cards)
-
-	winPaths = make([][]Move, 0, 1000*(targetDepth*targetDepth*targetDepth))
 
 	// caching - use build tag onitama_cache
 	cache := onitamaCache{}
@@ -88,6 +97,11 @@ func SearchExhaustive(cards []Card, targetDepth uint64) (metrics []DepthMetric, 
 		return metrics, nil, time.Now().Sub(start)
 	}
 
+	winPaths = &moveNode{
+		Instances: 1,
+		Paths: map[Move]*moveNode{},
+	}
+
 	// populate stack with some work
 	stack.Push(MoveUndo)
 	stack.PushMany(st.Moves())
@@ -97,7 +111,7 @@ func SearchExhaustive(cards []Card, targetDepth uint64) (metrics []DepthMetric, 
 	for {
 		if move = stack.Pop(); move == MoveUndo {
 			// finished processing node children will yield a skip move
-			// to signify we need to go one depth back up
+			// to signify we need to go one Depth back up
 			for ; move == MoveUndo && stack.Size() > 0; move = stack.Pop() {
 				st.UndoMove()
 			}
@@ -163,10 +177,115 @@ func SearchExhaustive(cards []Card, targetDepth uint64) (metrics []DepthMetric, 
 			})
 		})
 
-		// win paths
+		// win Paths
 		for i := range st.Moves() {
-			if (st.Moves()[i] & (1 << 12)) > 0 {
-				anyWins = false
+			if st.generatedMoves[i].Win() {
+				anyWins = true
+				if !oniconst.StoreWins {
+					break
+				}
+
+				node := winPaths
+				node.Instances++
+
+				var exists bool
+				for m := uint64(1); m <= st.Depth(); m++ {
+					if st.previousMoves[m] == 0 {
+						break
+					}
+					if _, exists = node.Paths[st.previousMoves[m]]; !exists {
+						node.Paths[st.previousMoves[m]] = &moveNode{
+							Depth:     node.Depth +1,
+							Instances: 1,
+							Paths: map[Move]*moveNode{},
+						}
+					} else {
+						node.Paths[st.previousMoves[m]].Instances++
+					}
+					node = node.Paths[st.previousMoves[m]]
+				}
+			}
+		}
+
+		if currentDepth >= targetDepth {
+			st.UndoMove()
+		} else {
+			stack.Push(MoveUndo) // identify a new Depth
+			if !anyWins {
+				stack.PushMany(st.Moves())
+			}
+		}
+		anyWins = false
+	}
+
+	return metrics, winPaths, time.Now().Sub(start)
+}
+
+
+// SearchForTempleWins Stores paths of moves whenever a win by temple is achieved
+func SearchForTempleWins(cards []Card, targetDepth uint64) (metrics []DepthMetric, paths [][]Move, duration time.Duration) {
+	if targetDepth == 0 {
+		return nil, nil, 0
+	}
+	stack := Stack{}
+	st := State{}
+	st.CreateGame(cards)
+
+	// metrics
+	buildtag.Onitama_metrics(func() {
+		metrics = make([]DepthMetric, targetDepth+1)
+	})
+
+	paths = make([][]Move, 0, 1000*(targetDepth*targetDepth))
+
+	// prepare stack and move indexing
+	start := time.Now()
+	st.GenerateMoves()
+	buildtag.Onitama_metrics(func() {
+		metric := createMetric(1, st.NextPlayer(), st.Moves())
+		metrics[1].Increment(&metric)
+	})
+	if targetDepth == 1 {
+		return metrics, nil, time.Now().Sub(start)
+	}
+
+	// populate stack with some work
+	stack.Push(MoveUndo)
+	stack.PushMany(st.Moves())
+	var move Move
+	var anyWins bool
+	for {
+		if move = stack.Pop(); move == MoveUndo {
+			// finished processing node children will yield a skip move
+			// to signify we need to go one Depth back up
+			for ; move == MoveUndo && stack.Size() > 0; move = stack.Pop() {
+				st.UndoMove()
+			}
+			if stack.Size() == 0 {
+				break
+			}
+		}
+
+		st.ApplyMove(move)
+		st.GenerateMoves()
+		currentDepth := st.Depth() + 1
+
+		buildtag.Onitama_metrics(func() { // build tag "onitama_metrics"
+			// populate game metrics for the cached entries
+			cdepth := int(currentDepth)
+			metric := createMetric(cdepth, st.NextPlayer(), st.Moves())
+			metrics[cdepth].Increment(&metric)
+		})
+
+		// win Paths
+		for i := range st.Moves() {
+			if st.generatedMoves[i].Win() {
+				anyWins = true
+
+				if !st.generatedMoves[i].WinByTemple() {
+					continue
+				}
+
 				path := make([]Move, currentDepth)
 				for m := uint64(1); m <= st.Depth(); m++ {
 					if st.previousMoves[m] == 0 {
@@ -175,21 +294,22 @@ func SearchExhaustive(cards []Card, targetDepth uint64) (metrics []DepthMetric, 
 					path[m-1] = st.previousMoves[m]
 				}
 				path[currentDepth-1] = st.Moves()[i]
-				winPaths = append(winPaths, path)
+				paths = append(paths, path)
 			}
 		}
 
 		if currentDepth >= targetDepth {
 			st.UndoMove()
 		} else {
-			stack.Push(MoveUndo) // identify a new depth
+			stack.Push(MoveUndo) // identify a new Depth
 			if !anyWins {
 				stack.PushMany(st.Moves())
 			}
 		}
+		anyWins = false
 	}
 
-	return metrics, winPaths, time.Now().Sub(start)
+	return metrics, paths, time.Now().Sub(start)
 }
 
 // SearchExhaustiveInfinityPaths looks through a card configuration to detect if a infinity branch exists
@@ -229,7 +349,7 @@ func SearchExhaustiveInfinityPaths(cards []Card, targetDepth uint64, limitHits i
 	for {
 		if move = stack.Pop(); move == MoveUndo {
 			// finished processing node children will yield a skip move
-			// to signify we need to go one depth back up
+			// to signify we need to go one Depth back up
 			for ; move == MoveUndo && stack.Size() > 0; move = stack.Pop() {
 				st.UndoMove()
 			}
@@ -253,7 +373,7 @@ func SearchExhaustiveInfinityPaths(cards []Card, targetDepth uint64, limitHits i
 		if st.Depth() >= targetDepth {
 			st.UndoMove()
 		} else {
-			stack.Push(MoveUndo) // identify a new depth
+			stack.Push(MoveUndo) // identify a new Depth
 			stack.PushMany(st.Moves())
 		}
 	}

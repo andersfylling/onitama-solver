@@ -41,6 +41,10 @@ func (m Move) Win() bool {
 	return (m.Action() & 1) == 1
 }
 
+func (m Move) WinByTemple() bool {
+	return m.Action() == 7
+}
+
 func (m Move) Pass() bool {
 	return m.Action() == 2 && m.From() == m.To()
 }
@@ -65,6 +69,8 @@ func (m Move) CardIndex() Number {
 }
 
 func (m *Move) Encode(st *State, fromIndex, toIndex, cardIndex BitboardPos) {
+	m.Reset()
+
 	///////////////////
 	// From
 	///////////////////

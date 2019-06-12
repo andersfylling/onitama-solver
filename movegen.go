@@ -34,7 +34,7 @@ func generateMoves(st *State) (moveIndex Number) {
 			moves = addMovePositionsToPieceBB(card, i, friends)
 
 			for j := LSB(moves); j != 64; j = NLSB(&moves, j) {
-				st.generatedMoves[moveIndex] = encodeMove(st, i, j, c)
+				st.generatedMoves[moveIndex].Encode(st, i, j, c)
 				moveIndex++
 			}
 		}

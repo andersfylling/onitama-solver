@@ -14,8 +14,8 @@ const (
 )
 
 type Game struct {
-	// game tree with depth of 40
-	// one depth at the time... same as chess
+	// game tree with Depth of 40
+	// one Depth at the time... same as chess
 	Tree [HighestNrOfMoves * NrOfPlayerPieces * MaxDepth]Move
 }
 
@@ -45,7 +45,7 @@ type State struct {
 	hasWon bool
 
 	// the first move is 0, as there is no actual move. Think that every
-	// index represents the actual depth.
+	// index represents the actual Depth.
 	previousMoves [MaxDepth]Move
 	currentDepth  Number // NOTE! this must be handled during caching (key decoding)
 
@@ -206,7 +206,7 @@ func (st *State) GenerateMoves() {
 		return
 	}
 
-	// WARNING: remember to add the generated moves to your game tree as these will be overwritten at the next depth.
+	// WARNING: remember to add the generated moves to your game tree as these will be overwritten at the next Depth.
 	generateMoves(st)
 }
 
@@ -255,25 +255,19 @@ func (st *State) UndoMove() {
 	if st.currentDepth == 0 {
 		return
 	}
-	// TODO: undo move
-	if !st.hasWon {
-		// if it is a winning node, the previously generated moves have not been overwritten
-		st.generatedMovesLen = 0
-	}
+
+	// Note: not setting generatedMovesLen to 0 when the state has .hasWon,
+	// the leafs will still be in memory, and there is no reason to regenerate these.
+	// However, if there's a game tree used; there should be no reason care about the already stored moves.
+	st.generatedMovesLen = 0
 	st.hasWon = false // you can never go beyond a winning node
-	st.changePlayer() // we need to make changes to the previous player, not the current
 
+	// we need to make changes to the previous player, not the current
+	st.changePlayer()
 	move := st.previousMoves[st.currentDepth]
-	//if st.previousMoves[st.currentDepth] != move {
-	//	fmt.Println(st)
-	//	fmt.Printf("%+v\n", st.previousMoves)
-	//	panic(fmt.Sprintln(st.previousMoves[st.currentDepth], move))
-	//}
-	st.currentDepth--
-
-	// adjust for the player offset
-	cardIndex := NrOfPlayerCards*st.activePlayer + move.CardIndex()
+	cardIndex := NrOfPlayerCards*st.activePlayer + move.CardIndex() // adjust for the player offset
 	st.swapCard(cardIndex)
+	st.currentDepth--
 
 	// update boards
 	from := move.From()
@@ -300,7 +294,7 @@ func (st *State) ApplyMove(move Move) {
 	st.board[st.activePlayer*NrOfPieceTypes+friendlyBoardIndex] ^= boardIndexToBoard(from) | boardIndexToBoard(to)
 	st.board[st.otherPlayer*NrOfPieceTypes+hostileBoardIndex] ^= boardIndexToBoard(to)
 
-	// the move represents the change needed to be done, to reach this depth...
+	// the move represents the change needed to be done, to reach this Depth...
 	st.currentDepth++ // TODO: decrement after?
 	st.previousMoves[st.currentDepth] = move
 

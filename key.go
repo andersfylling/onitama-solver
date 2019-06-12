@@ -71,9 +71,9 @@ func (k Key) String() string {
 //  - The state has both masters
 //  - At least one blue piece exists
 func (k *Key) Encode(st *State) {
-	// only call this method after ApplyMove or the current depth of a state
+	// only call this method after ApplyMove or the current Depth of a state
 	// has been correctly set. This method sets the cache key for a state at
-	// the current depth.
+	// the current Depth.
 	const bi = BluePlayer * NrOfPieceTypes
 	const bsi = (BluePlayer * NrOfPieceTypes) + StudentsIndex
 	const bmi = (BluePlayer * NrOfPieceTypes) + MasterIndex
