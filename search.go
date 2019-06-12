@@ -26,7 +26,7 @@ func nextMove(stack *Stack, st *State) (move Move, ok bool) {
 	return move, true
 }
 
-func createMetric(depth, activePlayer int, moves []Move) (metric DepthMetric) {
+func createMetric(depth, activePlayer uint8, moves []Move) (metric DepthMetric) {
 	metric = DepthMetric{
 		Depth:          depth,
 		ActivePlayer:   activePlayer,
@@ -168,7 +168,7 @@ func SearchExhaustive(cards []Card, targetDepth uint64) (metrics []DepthMetric, 
 
 		buildtag.Onitama_metrics(func() { // build tag "onitama_metrics"
 			// populate game metrics for the cached entries
-			cdepth := int(currentDepth)
+			cdepth := uint8(currentDepth)
 			metric := createMetric(cdepth, st.NextPlayer(), st.Moves())
 			metrics[cdepth].Increment(&metric)
 
@@ -272,7 +272,7 @@ func SearchForTempleWins(cards []Card, targetDepth uint64) (metrics []DepthMetri
 
 		buildtag.Onitama_metrics(func() { // build tag "onitama_metrics"
 			// populate game metrics for the cached entries
-			cdepth := int(currentDepth)
+			cdepth := uint8(currentDepth)
 			metric := createMetric(cdepth, st.NextPlayer(), st.Moves())
 			metrics[cdepth].Increment(&metric)
 		})

@@ -304,8 +304,8 @@ func (st *State) ApplyMove(move Move) {
 	st.changePlayer()
 }
 
-func (st *State) NextPlayer() int {
-	return int((st.activePlayer + 1) % NrOfPlayers)
+func (st *State) NextPlayer() uint8 {
+	return uint8((st.activePlayer + 1) % NrOfPlayers)
 }
 
 func (st *State) changePlayer() {

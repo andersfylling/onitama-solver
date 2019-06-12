@@ -283,6 +283,97 @@ func DrawCards() (selection []Card) {
 	return
 }
 
+// GenCardConfigs generates all possible unique card configurations that respects
+// the ordered set ({a1, a2}, {a3, a4}, a5)
+func GenCardConfigs(selection []Card) (configs [][]Card) {
+	rmDuplicates := func(s []Card) (uniques []Card) {
+		for i := range s {
+			var exists bool
+			for j := range uniques {
+				if s[i] == uniques[j] {
+					exists = true
+					break
+				}
+			}
+
+			if exists {
+				continue
+			}
+
+			uniques = append(uniques, s[i])
+		}
+
+		return uniques
+	}
+
+	genTuples := func(s []Card) (tuples [][2]Card) {
+		for i := range s {
+			for j := i+1; j < len(s); j++ {
+				tuples = append(tuples, [2]Card{s[i], s[j]})
+			}
+		}
+
+		return tuples
+	}
+
+	missingCards := func(s, taken []Card) (missing []Card) {
+		for i := range s {
+			var match bool
+			for j := range taken {
+				if s[i] == taken[j] {
+					match = true
+					break
+				}
+			}
+
+			if !match {
+				missing = append(missing, s[i])
+			}
+		}
+
+		return missing
+	}
+
+	selection = rmDuplicates(selection)
+	tuples := genTuples(selection)
+
+	// generate the first part of the ordered set ({a1, a2}, {a3, a4}, a5);
+	// two first sub-set a1-a4.
+	var bases [][]Card
+	for i := range tuples {
+		for j := i+1; j < len(tuples); j++ {
+			p1 := append(tuples[i][:], tuples[j][:]...)
+			bases = append(bases, p1)
+
+			p2 := append(tuples[j][:], tuples[i][:]...)
+			bases = append(bases, p2)
+		}
+	}
+
+	// combine a5 and the first sub sets
+	for i := range bases {
+		b := bases[i]
+		options := missingCards(selection, b)
+
+		for j := range options {
+			config := append(b, options[j])
+			configs = append(configs, config)
+		}
+	}
+
+	// remove duplicates in each card config
+	prev := configs
+	configs = configs[:0]
+	for i := range prev {
+		config := rmDuplicates(prev[i])
+		if len(config) == len(prev[i]) {
+			configs = append(configs, config)
+		}
+	}
+
+	return configs
+}
+
 const _Card_name = "RabbitCobraRoosterCraneOxHorseBoarCrabEelGooseFrogMantisMonkeyElephantDragonTiger"
 
 var _Card_map = map[Card]string{

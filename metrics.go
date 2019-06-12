@@ -8,8 +8,8 @@ type DepthMetric struct {
 	TemplesTaken    uint64
 	NonViolentMoves uint64
 
-	Depth          int
-	ActivePlayer   int
+	Depth          uint8
+	ActivePlayer   uint8
 	GeneratedMoves uint64
 }
 
