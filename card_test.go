@@ -1,6 +1,7 @@
 package onitamago
 
 import (
+	"fmt"
 	"testing"
 )
 
@@ -22,16 +23,35 @@ func TestRotateCard(t *testing.T) {
 	got.Rotate()
 
 	check(t, got, wants)
+
+	names := []Card{
+		Tiger, Goose, Rooster, Rabbit, Horse,
+	}
+	for _, card := range names {
+		fmt.Print(uint64(card), ",")
+	}
+
+	cards := Deck(DeckOriginal, DeckSenseisPath)
+	for i := range cards {
+		cards[i].Rotate() // panic on unsupported cards
+	}
+}
+
+func TestCard_PrettyString(t *testing.T) {
+	roosterStr := `_  _  _  _  _
+_  _  _  X  _
+_  X  X  X  _
+_  X  _  _  _
+_  _  _  _  _`
+	if roosterStr != Rooster.String() {
+		t.Error("different strings")
+	}
 }
 
 func TestCard_Name(t *testing.T) {
+	cards := Deck(DeckSenseisPath, DeckOriginal)
 
-	cards := []Card{
-		Rooster, Rabbit, Ox, Cobra,
-		Horse, Goose, Frog, Eel,
-		Tiger, Dragon, Crab, Elephant, Monkey, Mantis, Crane, Boar,
-	}
-
+	// make sure name can be retrieved for each type
 	for _, card := range cards {
 		card.Name()
 	}

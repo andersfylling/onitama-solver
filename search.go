@@ -99,7 +99,7 @@ func SearchExhaustive(cards []Card, targetDepth uint64) (metrics []DepthMetric, 
 
 	winPaths = &moveNode{
 		Instances: 1,
-		Paths: map[Move]*moveNode{},
+		Paths:     map[Move]*moveNode{},
 	}
 
 	// populate stack with some work
@@ -195,9 +195,9 @@ func SearchExhaustive(cards []Card, targetDepth uint64) (metrics []DepthMetric, 
 					}
 					if _, exists = node.Paths[st.previousMoves[m]]; !exists {
 						node.Paths[st.previousMoves[m]] = &moveNode{
-							Depth:     node.Depth +1,
+							Depth:     node.Depth + 1,
 							Instances: 1,
-							Paths: map[Move]*moveNode{},
+							Paths:     map[Move]*moveNode{},
 						}
 					} else {
 						node.Paths[st.previousMoves[m]].Instances++
@@ -220,7 +220,6 @@ func SearchExhaustive(cards []Card, targetDepth uint64) (metrics []DepthMetric, 
 
 	return metrics, winPaths, time.Now().Sub(start)
 }
-
 
 // SearchForTempleWins Stores paths of moves whenever a win by temple is achieved
 func SearchForTempleWins(cards []Card, targetDepth uint64) (metrics []DepthMetric, paths [][]Move, duration time.Duration) {

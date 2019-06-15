@@ -14,3 +14,7 @@
 .idea
 benchmarks/benchmarks
 benchmarks/perft_cache
+
+cmd/abacus/oniabacus
+cmd/abacus/abacus
+cmd/abacus/onitamago.*

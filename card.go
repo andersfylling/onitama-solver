@@ -12,6 +12,25 @@ const NrOfPlayerCards = 2
 const HighestNrOfMoves = 4
 
 const (
+	DeckOriginal = iota
+	DeckSenseisPath
+
+	// CardOffset is how many bit position the initial card masks are shifted
+	// remember that offset is number of bit positions. Note that every card
+	// has their center at bit position 45.
+	//  _	_	_	_	_	_	_	_
+	//  _	_	_	_	_	_	_	_
+	//  _	_	45	_	_	_	_	_
+	//  _	_	_	_	_	_	_	_
+	//  _	_	_	_	_	_	_	_
+	//  _	_	_	_	_	_	_	_
+	//  _	_	_	_	_	_	_	_
+	//  _	_	_	_	_	_	_	_
+	CardOffset BitboardPos = 45
+)
+
+// DeckOriginal cards
+const (
 	// Tiger card
 	//  _  _  X  _  _
 	//  _  _  _  _  _
@@ -154,30 +173,196 @@ const (
 	//  _  _  _  _  _
 	Cobra        Card = 0x10601000000000
 	CobraRotated Card = Eel
+)
 
-	// CardOffset is how many bit position the initial card masks are shifted
-	// remember that offset is number of bit positions. Note that every card
-	// has their center at bit position 45.
-	//  _	_	_	_	_	_	_	_
-	//  _	_	_	_	_	_	_	_
-	//  _	_	45	_	_	_	_	_
-	//  _	_	_	_	_	_	_	_
-	//  _	_	_	_	_	_	_	_
-	//  _	_	_	_	_	_	_	_
-	//  _	_	_	_	_	_	_	_
-	//  _	_	_	_	_	_	_	_
-	CardOffset BitboardPos = 45
+// DeckSenseisPath cards
+const (
+	// Turtle card
+	//  _  _  _  _  _
+	//  _  _  _  _  _
+	//  X  _  O  _  X
+	//  _  X  _  X  _
+	//  _  _  _  _  _
+	Turtle        Card = 0xa85000000000
+	TurtleRotated Card = Pheonix
+
+	// Pheonix card
+	//  _  _  _  _  _
+	//  _  X  _  X  _
+	//  X  _  O  _  X
+	//  _  _  _  _  _
+	//  _  _  _  _  _
+	Pheonix        Card = 0x50a80000000000
+	PheonixRotated Card = Turtle
+
+	// Otter card
+	//  _  _  _  _  _
+	//  _  X  _  _  _
+	//  _  _  O  _  X
+	//  _  _  _  X  _
+	//  _  _  _  _  _
+	Otter        Card = 0x40281000000000
+	OtterRotated Card = 0x40a01000000000
+
+	// Iguana card
+	//  _  _  _  _  _
+	//  X  _  X  _  _
+	//  _  _  O  _  _
+	//  _  _  _  X  _
+	//  _  _  _  _  _
+	Iguana        Card = 0xa0201000000000
+	IguanaRotated Card = 0x40202800000000
+
+	// Sable card
+	//  _  _  _  _  _
+	//  _  _  _  X  _
+	//  X  _  O  _  _
+	//  _  X  _  _  _
+	//  _  _  _  _  _
+	Sable        Card = 0x10a04000000000
+	SableRotated Card = 0x10284000000000
+
+	// Panda card
+	//  _  _  _  _  _
+	//  _  _  X  X  _
+	//  _  _  O  _  _
+	//  _  X  _  _  _
+	//  _  _  _  _  _
+	Panda        Card = 0x30204000000000
+	PandaRotated Card = 0x10206000000000
+
+	// Bear card
+	//  _  _  _  _  _
+	//  _  X  X  _  _
+	//  _  _  O  _  _
+	//  _  _  _  X  _
+	//  _  _  _  _  _
+	Bear        Card = 0x60201000000000
+	BearRotated Card = 0x40203000000000
+
+	// Fox card
+	//  _  _  _  _  _
+	//  _  _  _  X  _
+	//  _  _  O  X  _
+	//  _  _  _  X  _
+	//  _  _  _  _  _
+	Fox        Card = 0x10301000000000
+	FoxRotated Card = Dog
+
+	// Giraffe card
+	//  _  _  _  _  _
+	//  X  _  _  _  X
+	//  _  _  O  _  _
+	//  _  _  X  _  _
+	//  _  _  _  _  _
+	Giraffe        Card = 0x88202000000000
+	GiraffeRotated Card = 0x20208800000000
+
+	// Kirin card
+	//  _  X  _  X  _
+	//  _  _  _  _  _
+	//  _  _  O  _  _
+	//  _  _  _  _  _
+	//  _  _  X  _  _
+	Kirin        Card = 0x5000200020000000
+	KirinRotated Card = 0x2000200050000000
+
+	// Rat card
+	//  _  _  _  _  _
+	//  _  _  X  _  _
+	//  _  X  O  _  _
+	//  _  _  _  X  _
+	//  _  _  _  _  _
+	Rat        Card = 0x20601000000000
+	RatRotated Card = 0x40302000000000
+
+	// Tanuki card
+	//  _  _  _  _  _
+	//  _  _  X  _  X
+	//  _  _  O  _  _
+	//  _  X  _  _  _
+	//  _  _  _  _  _
+	Tanuki        Card = 0x28204000000000
+	TanukiRotated Card = 0x1020a000000000
+
+	// Mouse card
+	//  _  _  _  _  _
+	//  _  _  X  _  _
+	//  _  _  O  X  _
+	//  _  X  _  _  _
+	//  _  _  _  _  _
+	Mouse        Card = 0x20304000000000
+	MouseRotated Card = 0x10602000000000
+
+	// Viper card
+	//  _  _  _  _  _
+	//  _  _  X  _  _
+	//  X  _  O  _  _
+	//  _  _  _  X  _
+	//  _  _  _  _  _
+	Viper        Card = 0x20a01000000000
+	ViperRotated Card = 0x40282000000000
+
+	// Sea Snake card
+	//  _  _  _  _  _
+	//  _  _  X  _  _
+	//  _  _  O  _  X
+	//  _  X  _  _  _
+	//  _  _  _  _  _
+	SeaSnake        Card = 0x20284000000000
+	SeaSnakeRotated Card = 0x10a02000000000
+
+	// Dog card
+	//  _  _  _  _  _
+	//  _  X  _  _  _
+	//  _  X  O  _  _
+	//  _  X  _  _  _
+	//  _  _  _  _  _
+	Dog        Card = 0x40604000000000
+	DogRotated Card = Fox
 )
 
 // //go:generate stringer -type=Card
 type Card Bitboard
 
 func (c Card) Name() string {
-	if str, ok := _Card_map[c]; ok {
+	if str, ok := _card_name[c]; ok {
 		return str
 	}
 
 	panic("no such card")
+}
+
+func (c Card) String() string {
+	var tmp string
+	add := func(mark bool) {
+		if mark {
+			tmp += "X"
+		} else {
+			tmp += "_"
+		}
+	}
+
+	p := 63
+	for y := 0; y < 5; y++ {
+		for x := 0; x < 5; x++ {
+			bb := Bitboard(1) << BitboardPos(p-8*y-x)
+			add(bb&c.Bitboard() > 0)
+		}
+	}
+
+	// add spaces and new lines
+	var b []byte
+	for i := range tmp {
+		b = append(b, tmp[i])
+		if (i+1)%5 == 0 {
+			b = append(b, '\n')
+		} else {
+			b = append(b, []byte("  ")...)
+		}
+	}
+
+	return string(b[:len(b)-1])
 }
 
 func (c Card) Bitboard() Bitboard {
@@ -189,60 +374,99 @@ func (c Card) Heatmap() (b BitboardHeatmap) {
 	return b
 }
 
-func (c *Card) Rotate() {
-	switch *c {
-	case Tiger:
-		*c = TigerRotated
-	case TigerRotated:
-		*c = Tiger
-	case Dragon:
-		*c = DragonRotated
-	case DragonRotated:
-		*c = Dragon
-	case Frog:
-		*c = FrogRotated
-	case FrogRotated:
-		*c = Frog
-	case Rabbit:
-		*c = RabbitRotated
-	case RabbitRotated:
-		*c = Rabbit
-	case Elephant:
-		*c = ElephantRotated
-	case ElephantRotated:
-		*c = Elephant
-	case Crab:
-		*c = CrabRotated
-	case CrabRotated:
-		*c = Crab
-	case Boar:
-		*c = BoarRotated
-	case BoarRotated:
-		*c = Boar
+var _rotated = map[Card]Card{
+	Tiger:           TigerRotated,
+	TigerRotated:    Tiger,
+	Rooster:         RoosterRotated, // Rooster == RoosterRotated
+	Goose:           GooseRotated,   // Goose == GooseRotated
+	Monkey:          MonkeyRotated,  // Monkey == MonkeyRotated
+	Dragon:          DragonRotated,
+	DragonRotated:   Dragon,
+	Frog:            Otter,
+	Rabbit:          Sable,
+	Elephant:        ElephantRotated,
+	ElephantRotated: Elephant,
+	Crab:            CrabRotated,
+	CrabRotated:     Crab,
+	Boar:            BoarRotated,
+	BoarRotated:     Boar,
+	Horse:           HorseRotated,
+	Ox:              OxRotated,
+	Crane:           Mantis,
+	Mantis:          Crane,
+	Eel:             Cobra,
+	Cobra:           Eel,
 
-	case Horse: // opposite of Ox
-		*c = HorseRotated
-	case Ox: // opposite of Horse
-		*c = OxRotated
-
-	case Crane: // opposite of Mantis
-		*c = Mantis
-	case Mantis: // opposite of Crane
-		*c = Crane
-
-	case Eel: // Opposite of Cobra
-		*c = Cobra
-	case Cobra: // Opposite of Eel
-		*c = Eel
-	}
+	// expansion sensei's path
+	Turtle:          Pheonix,
+	Pheonix:         Turtle,
+	Otter:           Frog,
+	Iguana:          IguanaRotated,
+	IguanaRotated:   Iguana,
+	Sable:           Rabbit,
+	Bear:            BearRotated,
+	BearRotated:     Bear,
+	Panda:           PandaRotated,
+	PandaRotated:    Panda,
+	Giraffe:         GiraffeRotated,
+	GiraffeRotated:  Giraffe,
+	Kirin:           KirinRotated,
+	KirinRotated:    Kirin,
+	Rat:             RatRotated,
+	RatRotated:      Rat,
+	Tanuki:          TanukiRotated,
+	TanukiRotated:   Tanuki,
+	Mouse:           MouseRotated,
+	MouseRotated:    Mouse,
+	Viper:           ViperRotated,
+	ViperRotated:    Viper,
+	SeaSnake:        SeaSnakeRotated,
+	SeaSnakeRotated: SeaSnake,
+	Dog:             Fox,
+	Fox:             Dog,
 }
 
-func Deck() []Card {
-	return []Card{
-		Rooster, Rabbit, Ox, Cobra,
-		Horse, Goose, Frog, Eel,
-		Tiger, Dragon, Crab, Elephant, Monkey, Mantis, Crane, Boar,
+func (c *Card) Rotate() {
+	if r, ok := _rotated[*c]; ok {
+		*c = r
+		return
 	}
+
+	panic("unknown rotation\n" + c.String())
+}
+
+func (c Card) Rotated() Card {
+	if r, ok := _rotated[c]; ok {
+		return r
+	}
+
+	panic("unknown rotation")
+}
+
+func Deck(deckTypes ...uint) (cards []Card) {
+	if len(deckTypes) == 0 {
+		deckTypes = append(deckTypes, DeckOriginal)
+	}
+
+	decks := [][]Card{
+		/* original */ {
+			Rooster, Rabbit, Ox, Cobra,
+			Horse, Goose, Frog, Eel,
+			Tiger, Dragon, Crab, Elephant,
+			Monkey, Mantis, Crane, Boar,
+		},
+		/* sensei's path */ {
+			Turtle, Pheonix, Otter, Iguana,
+			Sable, Panda, Bear, Fox,
+			Giraffe, Kirin, Rat, Tanuki,
+			Mouse, Viper, SeaSnake, Dog,
+		},
+	}
+
+	for _, deck := range deckTypes {
+		cards = append(cards, decks[deck]...)
+	}
+	return cards
 }
 
 // CardConfig create a card configuration with awareness of which players holds which cards
@@ -308,7 +532,7 @@ func GenCardConfigs(selection []Card) (configs [][]Card) {
 
 	genTuples := func(s []Card) (tuples [][2]Card) {
 		for i := range s {
-			for j := i+1; j < len(s); j++ {
+			for j := i + 1; j < len(s); j++ {
 				tuples = append(tuples, [2]Card{s[i], s[j]})
 			}
 		}
@@ -341,7 +565,7 @@ func GenCardConfigs(selection []Card) (configs [][]Card) {
 	// two first sub-set a1-a4.
 	var bases [][]Card
 	for i := range tuples {
-		for j := i+1; j < len(tuples); j++ {
+		for j := i + 1; j < len(tuples); j++ {
 			p1 := append(tuples[i][:], tuples[j][:]...)
 			bases = append(bases, p1)
 
@@ -374,23 +598,54 @@ func GenCardConfigs(selection []Card) (configs [][]Card) {
 	return configs
 }
 
-const _Card_name = "RabbitCobraRoosterCraneOxHorseBoarCrabEelGooseFrogMantisMonkeyElephantDragonTiger"
+var _card_name = map[Card]string{
+	Tiger:           "Tiger",
+	TigerRotated:    "TigerRotated",
+	Rooster:         "Rooster", // Rooster == RoosterRotated
+	Goose:           "Goose",   // Goose == GooseRotated
+	Monkey:          "Monkey",  // Monkey == MonkeyRotated
+	Dragon:          "Dragon",
+	DragonRotated:   "DragonRotated",
+	Frog:            "Frog",
+	Rabbit:          "Rabbit",
+	Elephant:        "Elephant",
+	ElephantRotated: "ElephantRotated",
+	Crab:            "Crab",
+	CrabRotated:     "CrabRotated",
+	Boar:            "Boar",
+	BoarRotated:     "BoarRotated",
+	Horse:           "Horse",
+	Ox:              "Ox",
+	Crane:           "Crane",
+	Mantis:          "Mantis",
+	Eel:             "Eel",
+	Cobra:           "Cobra",
 
-var _Card_map = map[Card]string{
-	Rabbit:   _Card_name[0:6],
-	Cobra:    _Card_name[6:11],
-	Rooster:  _Card_name[11:18],
-	Crane:    _Card_name[18:23],
-	Ox:       _Card_name[23:25],
-	Horse:    _Card_name[25:30],
-	Boar:     _Card_name[30:34],
-	Crab:     _Card_name[34:38],
-	Eel:      _Card_name[38:41],
-	Goose:    _Card_name[41:46],
-	Frog:     _Card_name[46:50],
-	Mantis:   _Card_name[50:56],
-	Monkey:   _Card_name[56:62],
-	Elephant: _Card_name[62:70],
-	Dragon:   _Card_name[70:76],
-	Tiger:    _Card_name[76:81],
+	// expansion sensei's path
+	Turtle:          "Turtle",
+	Pheonix:         "Pheonix",
+	Otter:           "Otter",
+	Iguana:          "Iguana",
+	IguanaRotated:   "IguanaRotated",
+	Sable:           "Sable",
+	Bear:            "Bear",
+	BearRotated:     "BearRotated",
+	Panda:           "Panda",
+	PandaRotated:    "PandaRotated",
+	Giraffe:         "Giraffe",
+	GiraffeRotated:  "GiraffeRotated",
+	Kirin:           "Kirin",
+	KirinRotated:    "KirinRotated",
+	Rat:             "Rat",
+	RatRotated:      "RatRotated",
+	Tanuki:          "Tanuki",
+	TanukiRotated:   "TanukiRotated",
+	Mouse:           "Mouse",
+	MouseRotated:    "MouseRotated",
+	Viper:           "Viper",
+	ViperRotated:    "ViperRotated",
+	SeaSnake:        "SeaSnake",
+	SeaSnakeRotated: "SeaSnakeRotated",
+	Dog:             "Dog",
+	Fox:             "Fox",
 }

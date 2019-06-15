@@ -1,5 +1,9 @@
 package onitamago
 
+import (
+	"fmt"
+)
+
 func FetchMetrics(maxDepth int) {}
 
 type DepthMetric struct {
@@ -11,6 +15,19 @@ type DepthMetric struct {
 	Depth          uint8
 	ActivePlayer   uint8
 	GeneratedMoves uint64
+}
+
+func (m DepthMetric) String() string {
+	data := fmt.Sprintf(`
+  Taken
+    Students: %d
+    Masters: %d
+    Temples: %d
+  Pacifist moves: %d
+  Total moves: %d
+`, m.StudentsKilled, m.MastersKilled, m.TemplesTaken, m.NonViolentMoves, m.GeneratedMoves)
+
+	return fmt.Sprintf("depth-%d:{%s}\n", m.Depth, data)
 }
 
 func (m *DepthMetric) Reset() {
