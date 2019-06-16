@@ -311,6 +311,12 @@ func SearchForTempleWins(cards []Card, targetDepth uint64) (metrics []DepthMetri
 	return metrics, paths, time.Now().Sub(start)
 }
 
+func SearchExhaustiveForForcedWins(cards []Card, targetDepth uint64) (metrics []DepthMetric, paths [][]Move, duration time.Duration) {
+	metrics, paths, duration = SearchForTempleWins(cards, targetDepth)
+	paths = FilterForcedMoves(paths)
+	return
+}
+
 // SearchExhaustiveInfinityPaths looks through a card configuration to detect if a infinity branch exists
 // within the given search space. Note that pruning for wins are turned off so this has a larger search space
 // then the SearchExhaustive function.
@@ -378,4 +384,9 @@ func SearchExhaustiveInfinityPaths(cards []Card, targetDepth uint64, limitHits i
 	}
 
 	return paths, endTimer()
+}
+
+func FilterForcedMoves(paths [][]Move) (forced [][]Move) {
+	// TODO
+	return paths
 }
