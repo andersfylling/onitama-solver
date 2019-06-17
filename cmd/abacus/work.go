@@ -32,6 +32,7 @@ func (m *GameMetrics) String() string {
 	state := st.String() + "\n"
 	state += "Search depth: " + fmt.Sprint(m.Depth) + "\n"
 	state += "Duration: " + fmt.Sprint(m.Duration) + "\n"
+	state += "Forced wins (-duplicates): " + fmt.Sprint(len(m.ForcedWins)) + "\n"
 
 	state += fmt.Sprint(m.Metrics)
 
@@ -168,7 +169,7 @@ func saveToFile(metric *GameMetrics, b *bytes.Buffer) {
 }
 
 func work(cards []onitamago.Card,depth uint64) *GameMetrics {
-	m, w, d := onitamago.SearchForTempleWins(cards, depth)
+	m, w, d := onitamago.SearchExhaustiveForForcedWins(cards, depth)
 	return &GameMetrics{
 		Depth:      uint8(depth),
 		Duration:   d,
@@ -202,6 +203,10 @@ func worker(depth uint64, metricsChan chan<- *GameMetrics, c <-chan []onitamago.
 			fmt.Println("stops worker")
 			break
 		}
-		metricsChan <- work(cards, depth)
+		metrics := work(cards, depth)
+		if len(metrics.ForcedWins) > 200 {
+			fmt.Println(metrics.CardNames)
+		}
+		//metricsChan <- work(cards, depth)
 	}
 }

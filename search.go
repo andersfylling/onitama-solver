@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/andersfylling/onitamago/buildtag"
 	"github.com/andersfylling/onitamago/oniconst"
+	"github.com/sirupsen/logrus"
 
 	"time"
 )
@@ -279,6 +280,12 @@ func SearchForTempleWins(cards []Card, targetDepth uint64) (metrics []DepthMetri
 		// win Paths
 		for i := range st.Moves() {
 			if st.generatedMoves[i].Win() {
+				// we prune by master steals as well
+				// there is no reason to assume a play would drop taking a master
+				// so a forced win can be done. It does not polute the data either, as the
+				// path after taking the master is never created.
+				// - Pruning by temples only: 366.5k paths, filtering => 66k
+				// - Pruning by masters as well: 27.5k paths, filtering => 7k (also much quicker search)
 				anyWins = true
 
 				if !st.generatedMoves[i].WinByTemple() {
@@ -312,8 +319,11 @@ func SearchForTempleWins(cards []Card, targetDepth uint64) (metrics []DepthMetri
 }
 
 func SearchExhaustiveForForcedWins(cards []Card, targetDepth uint64) (metrics []DepthMetric, paths [][]Move, duration time.Duration) {
+	logrus.Info("searching for temple wins")
 	metrics, paths, duration = SearchForTempleWins(cards, targetDepth)
+	logrus.Info("filtering duplicate move paths (1)")
 	paths = FilterForcedMoves(paths)
+	logrus.Info("filtering complete (1)")
 	return
 }
 
@@ -387,6 +397,92 @@ func SearchExhaustiveInfinityPaths(cards []Card, targetDepth uint64, limitHits i
 }
 
 func FilterForcedMoves(paths [][]Move) (forced [][]Move) {
+	// sort into branches of the first move
+	var branches [][][]Move
+	for i := range paths {
+		var exists bool
+		for j := range branches {
+			if branches[j][0][0] == paths[i][0] {
+				branches[j] = append(branches[j], paths[i])
+				exists = true
+				break
+			}
+		}
+
+		if !exists {
+			branches = append(branches, [][]Move{paths[i]})
+		}
+	}
+
+	// identify duplicates, ignore hostile moves except their cards
+	// TODO: detect perfect paths, and remove paths that are not, for a given branch.
+	for b := range branches {
+		for t := len(branches[b])-1; t > 0; t-- {
+			if branches[b][t] == nil {
+				continue
+			}
+
+			for i := t-1; i >= 0; i-- {
+				if len(branches[b][t]) != len(branches[b][i]) {
+					continue
+				}
+
+				ok := true
+				for j := range branches[b][t] {
+					if j % 2 == 0 {
+						if branches[b][t][j] != branches[b][i][j] {
+							ok = false
+							break // missmatch
+						}
+					} else {
+						if branches[b][t][j].CardIndex() != branches[b][i][j].CardIndex() {
+							ok = false
+							break // missmatch
+						}
+					}
+				}
+				if ok {
+					branches[b][i] = nil
+				}
+			}
+		}
+	}
+
+	// remove nil paths
+	for b := range branches {
+		var nonNil [][]Move
+		for i := range branches[b] {
+			if branches[b][i] == nil {
+				continue
+			}
+
+			nonNil = append(nonNil, branches[b][i])
+		}
+		branches[b] = nonNil
+	}
+
+	var length int
+	for b := range branches {
+		length += len(branches[b])
+	}
+	fmt.Println(length, -1*(len(paths)-length))
+
+	// reset lengths but keep cap
+	for i := range paths {
+		paths[i] = paths[i][:0]
+	}
+	paths = paths[:0]
+
+	// unfold the branches
+	for b := range branches {
+		for i := range branches[b] {
+			paths = append(paths, branches[b][i])
+		}
+		branches[b] = nil
+	}
+	branches = nil
+
 	// TODO
+	// TODO!!!: store calculated MiB before and after pruning of duplicates and such (for the report)
 	return paths
 }
