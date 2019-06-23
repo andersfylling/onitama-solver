@@ -41,7 +41,6 @@ func (m *GameMetrics) String() string {
 	return state
 }
 
-
 var cmdSearch = cli.Command{
 	Name:  "search",
 	Usage: "search runs through the search space and collects data",
@@ -181,7 +180,7 @@ func saveToFile(metric *GameMetrics, b *bytes.Buffer) {
 	}
 }
 
-func work(cards []onitamago.Card,depth uint64) *GameMetrics {
+func work(cards []onitamago.Card, depth uint64) *GameMetrics {
 	m, w, d := onitamago.SearchExhaustiveForForcedWins(cards, depth)
 	return &GameMetrics{
 		Depth:      uint8(depth),
@@ -192,8 +191,6 @@ func work(cards []onitamago.Card,depth uint64) *GameMetrics {
 		CardNames:  cardNames(cards),
 	}
 }
-
-
 
 func store(metricsChan <-chan *GameMetrics) {
 	b := new(bytes.Buffer)

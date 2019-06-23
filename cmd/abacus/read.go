@@ -12,7 +12,6 @@ import (
 	"github.com/urfave/cli"
 )
 
-
 var cmdRead = cli.Command{
 	Name:  "read",
 	Usage: "read a results file - only gives basic information",
@@ -52,7 +51,6 @@ func readFile(filename string) {
 			return
 		}
 	}
-
 
 	newBlob := new(GameMetrics)
 	r := bytes.NewReader(b)

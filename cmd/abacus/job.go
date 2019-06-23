@@ -16,18 +16,26 @@ var cmdCreateJobs = cli.Command{
 		depth := c.GlobalInt("depth")
 		cores := c.GlobalInt("cores")
 		workers := c.GlobalInt("workers")
-		createJobs(cores, workers, depth)
+		account := c.String("account")
+		createJobs(account, cores, workers, depth)
 		return nil
+	},
+	Flags: []cli.Flag{
+		cli.StringFlag{
+			Name:  "account",
+			Value: "sduonitama_slim",
+			Usage: "account name",
+		},
 	},
 }
 
-func createJobs(cores, workers, depth int) {
+func createJobs(account string, cores, workers, depth int) {
 	allCards := onitamago.Deck(onitamago.DeckOriginal)
 	configs := onitamago.GenCardConfigs(allCards)
 
 	prev := -1
 	for i, cards := range configs {
-		createJob(cores, workers, depth, cards)
+		createJob(account, cores, workers, depth, cards)
 		progress := (i / len(configs)) * 100
 		if prev != progress {
 			prev = progress
@@ -36,16 +44,15 @@ func createJobs(cores, workers, depth int) {
 	}
 }
 
-func createJob(cores, workers, depth int, cards []onitamago.Card) {
+func createJob(account string, cores, workers, depth int, cards []onitamago.Card) {
 	//coresStr := strconv.FormatInt(int64(cores), 10)
 	workersStr := strconv.FormatInt(int64(workers), 10)
 	depthStr := strconv.FormatInt(int64(depth), 10)
 
-
 	// #SBATCH --ntasks-per-node ` + workersStr + `      # number of workers
 	template := `#! /bin/bash
 #
-#SBATCH --account anders          # account
+#SBATCH --account ` + account + `          # account
 #SBATCH --nodes 1                 # number of nodes
 #SBATCH --time 5:00:00            # max time (HH:MM:SS)
 
