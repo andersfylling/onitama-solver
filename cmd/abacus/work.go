@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"compress/gzip"
 	"fmt"
 	"log"
 	"math/rand"
@@ -11,6 +12,7 @@ import (
 	"time"
 
 	"github.com/andersfylling/onitamago"
+	"github.com/dustin/go-humanize"
 	ikea "github.com/ikkerens/ikeapack"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli"
@@ -32,10 +34,9 @@ func (m *GameMetrics) String() string {
 	state := st.String() + "\n"
 	state += "Search depth: " + fmt.Sprint(m.Depth) + "\n"
 	state += "Duration: " + fmt.Sprint(m.Duration) + "\n"
-	state += "Forced wins (-duplicates): " + fmt.Sprint(len(m.ForcedWins)) + "\n"
+	state += "Forced wins (-duplicates): " + humanize.Comma(int64(len(m.ForcedWins))) + "\n"
 
 	state += fmt.Sprint(m.Metrics)
-
 
 	return state
 }
@@ -138,8 +139,7 @@ func saveToFile(metric *GameMetrics, b *bytes.Buffer) {
 
 	// TODO: proper error handling
 	var filename string
-	filename += "onitamago."
-	filename += "results."
+	filename += "oniresults."
 	filename += join(metric.Cards, ".", true)
 	filename += ".d" + strconv.FormatUint(uint64(metric.Depth), 10)
 	filename += ".ikeapack"
@@ -163,7 +163,20 @@ func saveToFile(metric *GameMetrics, b *bytes.Buffer) {
 		panic("unable to pack file content")
 	}
 
-	if err := writeFile(b, filename); err != nil {
+	var data *bytes.Buffer
+	var compressed bytes.Buffer
+	zw, _ := gzip.NewWriterLevel(&compressed, gzip.BestCompression)
+	if _, err := zw.Write(b.Bytes()); err != nil {
+		logrus.Error("unable to compress content", err)
+		data = b
+	} else {
+		data = &compressed
+	}
+	if err := zw.Close(); err != nil {
+		logrus.Error("unable to close compression writer", err)
+	}
+
+	if err := writeFile(data, filename); err != nil {
 		panic("unable to write content to file" + err.Error())
 	}
 }

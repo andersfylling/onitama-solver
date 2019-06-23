@@ -187,3 +187,12 @@ func encodeMove(st *State, fromIndex, toIndex, cardIndex BitboardPos) (m Move) {
 	m.Encode(st, fromIndex, toIndex, cardIndex)
 	return
 }
+
+type sortableMoves [][]Move
+
+func (m sortableMoves) Len() int      { return len(m) }
+func (m sortableMoves) Swap(i, j int) { m[i], m[j] = m[j], m[i] }
+
+type ByNilMoves struct{ sortableMoves }
+
+func (s ByNilMoves) Less(i, j int) bool { return s.sortableMoves[i] == nil && s.sortableMoves[j] != nil }

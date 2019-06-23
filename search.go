@@ -2,8 +2,11 @@ package onitamago
 
 import (
 	"fmt"
+	"sort"
+
 	"github.com/andersfylling/onitamago/buildtag"
 	"github.com/andersfylling/onitamago/oniconst"
+	"github.com/dustin/go-humanize"
 	"github.com/sirupsen/logrus"
 
 	"time"
@@ -56,12 +59,6 @@ func createMetric(depth, activePlayer uint8, moves []Move) (metric DepthMetric) 
 	return metric
 }
 
-type moveNode struct {
-	Instances uint
-	Depth     uint
-	Paths     map[Move]*moveNode
-}
-
 // SearchExhaustive uses Depth first search to goes through the
 // entire game tree generated from the card configuration until
 // the target Depth is reached.
@@ -71,7 +68,7 @@ type moveNode struct {
 //
 // Build tags
 // - onitama_store_wins will populate winPaths
-func SearchExhaustive(cards []Card, targetDepth uint64) (metrics []DepthMetric, winPaths *moveNode /*infinityPaths [][]Move,*/, duration time.Duration) {
+func SearchExhaustive(cards []Card, targetDepth uint64) (metrics []DepthMetric, winPaths *MoveNode /*infinityPaths [][]Move,*/, duration time.Duration) {
 	if targetDepth == 0 {
 		return nil, nil, 0
 	}
@@ -98,9 +95,9 @@ func SearchExhaustive(cards []Card, targetDepth uint64) (metrics []DepthMetric, 
 		return metrics, nil, time.Now().Sub(start)
 	}
 
-	winPaths = &moveNode{
+	winPaths = &MoveNode{
 		Instances: 1,
-		Paths:     map[Move]*moveNode{},
+		Paths:     map[Move]*MoveNode{},
 	}
 
 	// populate stack with some work
@@ -195,10 +192,10 @@ func SearchExhaustive(cards []Card, targetDepth uint64) (metrics []DepthMetric, 
 						break
 					}
 					if _, exists = node.Paths[st.previousMoves[m]]; !exists {
-						node.Paths[st.previousMoves[m]] = &moveNode{
+						node.Paths[st.previousMoves[m]] = &MoveNode{
 							Depth:     node.Depth + 1,
 							Instances: 1,
-							Paths:     map[Move]*moveNode{},
+							Paths:     map[Move]*MoveNode{},
 						}
 					} else {
 						node.Paths[st.previousMoves[m]].Instances++
@@ -319,12 +316,30 @@ func SearchForTempleWins(cards []Card, targetDepth uint64) (metrics []DepthMetri
 }
 
 func SearchExhaustiveForForcedWins(cards []Card, targetDepth uint64) (metrics []DepthMetric, paths [][]Move, duration time.Duration) {
+	bitSize := func(paths [][]Move) (bits uint64) {
+		for i := range paths {
+			bits += uint64(len(paths[i])) * 16
+		}
+		return
+	}
+
 	logrus.Info("searching for temple wins")
 	metrics, paths, duration = SearchForTempleWins(cards, targetDepth)
-	logrus.Info("filtering duplicate move paths (1)")
-	paths = FilterForcedMoves(paths)
-	logrus.Info("filtering complete (1)")
-	return
+
+	logrus.Info("split into blue and brown player wins")
+	blues, browns := SplitMovesIntoBlueAndBrownWins(paths)
+
+	logrus.Info("remove duplicate move paths for blue paths")
+	blues = RemoveDuplicates(blues, true)
+
+	logrus.Info("remove duplicate move paths for brown paths")
+	browns = RemoveDuplicates(browns, false)
+
+	logrus.Info("reduced move data from ", humanize.Bytes(bitSize(paths)), ", to ", humanize.Bytes(bitSize(blues)+bitSize(browns)))
+
+	// flatten the data, as we can just decouple it later again
+	paths = append(blues, browns...)
+	return metrics, paths, duration
 }
 
 // SearchExhaustiveInfinityPaths looks through a card configuration to detect if a infinity branch exists
@@ -396,9 +411,25 @@ func SearchExhaustiveInfinityPaths(cards []Card, targetDepth uint64, limitHits i
 	return paths, endTimer()
 }
 
-func FilterForcedMoves(paths [][]Move) (forced [][]Move) {
-	// sort into branches of the first move
-	var branches [][][]Move
+func SplitMovesIntoBlueAndBrownWins(paths [][]Move) (blues, browns [][]Move) {
+	blues = make([][]Move, 0, len(paths)/2)
+	browns = make([][]Move, 0, len(paths)/2)
+	for i := range paths {
+		// blue moves first, giving a length of 1.
+		// then brown moves, giving a length of 2.
+		// This will look different from other player identifying modulo checks,
+		// due to them comparing indexes and not lengths.
+		if len(paths[i])%2 == 0 {
+			browns = append(browns, paths[i])
+		} else {
+			blues = append(blues, paths[i])
+		}
+	}
+	return
+}
+
+func OrganizePathsByFirstMove(paths [][]Move) (branches [][][]Move) {
+	branches = make([][][]Move, 0, 5*4) // 5 pieces * max move options per card
 	for i := range paths {
 		var exists bool
 		for j := range branches {
@@ -414,75 +445,59 @@ func FilterForcedMoves(paths [][]Move) (forced [][]Move) {
 		}
 	}
 
+	return branches
+}
+
+func RemoveDuplicates(paths [][]Move, blues bool) (forced [][]Move) {
+	var index int
+	if blues {
+		index = 0
+	} else {
+		index = 1
+	}
+
 	// identify duplicates, ignore hostile moves except their cards
-	// TODO: detect perfect paths, and remove paths that are not, for a given branch.
-	for b := range branches {
-		for t := len(branches[b])-1; t > 0; t-- {
-			if branches[b][t] == nil {
+	for t := len(paths) - 1; t > 0; t-- {
+		if paths[t] == nil {
+			continue
+		}
+
+		for i := t - 1; i >= 0; i-- {
+			if len(paths[t]) != len(paths[i]) {
 				continue
 			}
 
-			for i := t-1; i >= 0; i-- {
-				if len(branches[b][t]) != len(branches[b][i]) {
-					continue
-				}
-
-				ok := true
-				for j := range branches[b][t] {
-					if j % 2 == 0 {
-						if branches[b][t][j] != branches[b][i][j] {
-							ok = false
-							break // missmatch
-						}
-					} else {
-						if branches[b][t][j].CardIndex() != branches[b][i][j].CardIndex() {
-							ok = false
-							break // missmatch
-						}
+			ok := true
+			for j := range paths[t] {
+				if j%2 == index {
+					if paths[t][j] != paths[i][j] {
+						ok = false
+						break // missmatch
+					}
+				} else {
+					// opponent moves
+					if paths[t][j].CardIndex() != paths[i][j].CardIndex() {
+						ok = false
+						break // missmatch
 					}
 				}
-				if ok {
-					branches[b][i] = nil
-				}
+			}
+			if ok {
+				paths[i] = nil
 			}
 		}
 	}
 
-	// remove nil paths
-	for b := range branches {
-		var nonNil [][]Move
-		for i := range branches[b] {
-			if branches[b][i] == nil {
-				continue
-			}
+	// place nils first
+	sort.Sort(ByNilMoves{sortableMoves(paths)})
 
-			nonNil = append(nonNil, branches[b][i])
-		}
-		branches[b] = nonNil
-	}
-
-	var length int
-	for b := range branches {
-		length += len(branches[b])
-	}
-	fmt.Println(length, -1*(len(paths)-length))
-
-	// reset lengths but keep cap
+	// remove nil paths and reduce internal cap
 	for i := range paths {
-		paths[i] = paths[i][:0]
-	}
-	paths = paths[:0]
-
-	// unfold the branches
-	for b := range branches {
-		for i := range branches[b] {
-			paths = append(paths, branches[b][i])
+		if paths[i] != nil {
+			paths = append([][]Move{}, paths[i:]...)
+			break
 		}
-		branches[b] = nil
 	}
-	branches = nil
 
-	// TODO
-	// TODO!!!: store calculated MiB before and after pruning of duplicates and such (for the report)
 	return paths
 }

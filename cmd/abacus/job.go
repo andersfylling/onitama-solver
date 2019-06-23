@@ -50,10 +50,10 @@ func createJob(cores, workers, depth int, cards []onitamago.Card) {
 #SBATCH --time 5:00:00            # max time (HH:MM:SS)
 
 #onitamago:cards=[` + join(cards, ", ", true) + `]
-./oniabacus -workers=` + workersStr + ` -depth=` + depthStr + ` search -cards="` + join(cards, ",", false) + `" > ` + join(cards, ".", true) + `.log
+./oniabacus -workers=` + workersStr + ` -depth=` + depthStr + ` search -cards="` + join(cards, ",", false) + `" > onilog.` + join(cards, ".", true) + `.log
 `
 
-	f, err := os.Create("./onitamago.job." + join(cards, ".", true) + ".sh")
+	f, err := os.Create("./onijob." + join(cards, ".", true) + ".sh")
 	if err != nil {
 		panic(err)
 	}
