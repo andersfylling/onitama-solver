@@ -35,25 +35,40 @@ var cmdDeploy = cli.Command{
 
 func rmDeployedFiles(files []string) (undeployed []string) {
 	// every onijob.*.sh that has a onilog.*.log are deployed jobs
+	var nrOfFiles int
 	for i := len(files) - 1; i > 0; i-- {
 		if files[i] == "" {
 			continue
 		}
 
+		var match bool
 		for j := i - 1; j >= 0; j-- {
 			if oniFilesRelate(files[i], files[j]) {
 				files[j] = ""
+				files[i] = ""
+				match = true
+				break
 			}
+		}
+		if !match {
+			nrOfFiles++
+		}
+
+		if nrOfFiles >= 40 {
+			break
 		}
 	}
 
-	undeployed = make([]string, 0, len(files))
+	undeployed = make([]string, 0, 40)
 	for i := range files {
 		if files[i] == "" {
 			continue
 		}
 
 		undeployed = append(undeployed, files[i])
+		if len(undeployed) == 40 {
+			break
+		}
 	}
 	return undeployed
 }
@@ -61,6 +76,10 @@ func rmDeployedFiles(files []string) (undeployed []string) {
 func oniFilesRelate(a, b string) bool {
 	const OnijobPrefix = "onijob."
 	const OnilogPrefix = "onilog."
+
+	if a == "" || b == "" {
+		return false
+	}
 
 	if a[:len(OnijobPrefix)] != OnijobPrefix {
 		return false
