@@ -34,6 +34,7 @@ func main() {
 		cmdCreateJobs,
 		cmdSearch,
 		cmdRead,
+		cmdDeploy,
 	}
 
 	err := app.Run(os.Args)
