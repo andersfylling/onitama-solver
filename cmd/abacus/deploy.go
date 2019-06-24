@@ -2,10 +2,9 @@ package main
 
 import (
 	"fmt"
-	"os"
-	"path/filepath"
+	"io/ioutil"
+	"log"
 
-	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli"
 )
 
@@ -13,18 +12,18 @@ var cmdDeploy = cli.Command{
 	Name:  "show-undeployed",
 	Usage: "shows up to 40 undeployed sbatch jobs",
 	Action: func(c *cli.Context) error {
-		var files []string
-		err := filepath.Walk(".", func(path string, info os.FileInfo, err error) error {
-			files = append(files, path)
-			return nil
-		})
+		files, err := ioutil.ReadDir(".")
 		if err != nil {
-			logrus.Error(err)
-			return err
+			log.Fatal(err)
+		}
+
+		filenames := make([]string, 0, len(files))
+		for i := range files {
+			filenames = append(filenames, files[i].Name())
 		}
 
 		// print the filenames to the terminal, instead of running a sh task from here
-		undeployed := rmDeployedFiles(files)
+		undeployed := rmDeployedFiles(filenames)
 		for i := range undeployed[:40] {
 			fmt.Println(undeployed[i])
 		}
@@ -37,7 +36,7 @@ func rmDeployedFiles(files []string) (undeployed []string) {
 	// every onijob.*.sh that has a onilog.*.log are deployed jobs
 	var nrOfFiles int
 	for i := len(files) - 1; i > 0; i-- {
-		if files[i] == "" {
+		if files[i] == "" || len(files[i]) < 15 {
 			continue
 		}
 
