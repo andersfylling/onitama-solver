@@ -48,24 +48,29 @@ var cmdSearch = cli.Command{
 		depth := c.GlobalInt("depth")
 		workers := c.GlobalInt("workers")
 		cardsStr := c.String("cards")
-		if cardsStr == "" {
-			panic("no cards given")
-		}
-		cardsStrSlice := strings.Split(cardsStr, ",")
 
-		var cards []onitamago.Card
-		for i := range cardsStrSlice {
-			v, err := strconv.ParseInt(cardsStrSlice[i], 10, 64)
-			if err != nil {
-				panic(err)
+		var cards [][]onitamago.Card
+		if cardsStr != "" {
+			cardsStrSlice := strings.Split(cardsStr, ",")
+
+			var scards []onitamago.Card
+			for i := range cardsStrSlice {
+				v, err := strconv.ParseInt(cardsStrSlice[i], 10, 64)
+				if err != nil {
+					panic(err)
+				}
+
+				scards = append(scards, onitamago.Card(uint64(v)))
 			}
 
-			cards = append(cards, onitamago.Card(uint64(v)))
+			cards = append(cards, scards)
+			fmt.Println(cardsStr)
+		} else {
+			selection := onitamago.Deck(onitamago.DeckOriginal)
+			cards = onitamago.GenCardConfigs(selection)
 		}
 
-		fmt.Println(cardsStr)
-
-		startWork(workers, depth, [][]onitamago.Card{cards})
+		startWork(workers, depth, cards)
 		return nil
 	},
 	Flags: []cli.Flag{

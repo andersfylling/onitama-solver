@@ -13,7 +13,7 @@ func TestWinPath(t *testing.T) {
 		Rooster, Rabbit, Cobra, Mantis, Boar,
 	}
 
-	_, wins, d := SearchExhaustive(cards, 10)
+	_, wins, d := SearchExhaustive(cards, 6)
 	fmt.Println(d)
 	fmt.Println(wins.Instances)
 
@@ -53,7 +53,7 @@ func TestWinPath2(t *testing.T) {
 		Rooster, Rabbit, Cobra, Mantis, Boar,
 	}
 
-	_, wins, d := SearchForTempleWins(cards, 8)
+	_, wins, d := SearchForTempleWins(cards, 6)
 	fmt.Println(d)
 	fmt.Println(len(wins))
 }
