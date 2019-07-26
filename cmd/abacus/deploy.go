@@ -23,9 +23,24 @@ var cmdDeploy = cli.Command{
 			filenames = append(filenames, files[i].Name())
 		}
 
+		// find logs
+		logFiles := make([]string, 0, len(files))
+		for i := range filenames {
+			if strings.Contains(filenames[i], "onilog") {
+				logFiles = append(logFiles, filenames[i])
+			}
+		}
+
+		// job files
+		jobFiles := make([]string, 0, len(files))
+		for i := range filenames {
+			if strings.Contains(filenames[i], "onijob") {
+				jobFiles = append(jobFiles, filenames[i])
+			}
+		}
+
 		// print the filenames to the terminal, instead of running a sh task from here
-		undeployed := rmDeployedFiles(filenames)
-		undeployed = rmNonJobFiles(undeployed)
+		undeployed := rmDeployedFiles(jobFiles, logFiles)
 		var size int
 		if len(undeployed) >= 15 {
 			size = 15
@@ -40,50 +55,29 @@ var cmdDeploy = cli.Command{
 	},
 }
 
-func rmNonJobFiles(files []string) (jobs []string) {
-	jobs = make([]string, 0, len(files))
-	for i := range files {
-		if strings.Contains(files[i], "onijob.") {
-			jobs = append(jobs, files[i])
-		}
-	}
-	return jobs
-}
-
-func rmDeployedFiles(files []string) (undeployed []string) {
+func rmDeployedFiles(jobFiles, logFiles []string) (undeployed []string) {
 	// every onijob.*.sh that has a onilog.*.log are deployed jobs
-	var nrOfFiles int
-	for i := len(files) - 1; i > 0; i-- {
-		if files[i] == "" || len(files[i]) < 10 || strings.Contains(files[i], "onijob.") {
+	undeployed = make([]string, 0, 15)
+	for i := len(jobFiles) - 1; i > 0; i-- {
+		if jobFiles[i] == "" {
 			continue
 		}
 
 		var match bool
-		for j := i - 1; j >= 0; j-- {
-			if oniFilesRelate(files[i], files[j]) {
-				files[j] = ""
-				files[i] = ""
-				match = true
-				break
+		for j := range logFiles {
+			if logFiles[j] == "" || !oniFilesRelate(jobFiles[i], logFiles[j]) {
+				continue
 			}
-		}
-		if !match {
-			nrOfFiles++
-		}
-
-		if nrOfFiles >= 40 {
+			logFiles[j] = ""
+			jobFiles[i] = ""
+			match = true
 			break
 		}
-	}
-
-	undeployed = make([]string, 0, 40)
-	for i := range files {
-		if files[i] == "" {
-			continue
+		if !match {
+			undeployed = append(undeployed, jobFiles[i])
 		}
 
-		undeployed = append(undeployed, files[i])
-		if len(undeployed) == 40 {
+		if len(undeployed) >= 15 {
 			break
 		}
 	}
@@ -106,11 +100,5 @@ func oniFilesRelate(a, b string) bool {
 
 	cardsA := a[len(OnijobPrefix) : len(a)-len(".sh")]
 	cardsB := a[len(OnijobPrefix) : len(a)-len(".log")]
-	if len(cardsA) != len(cardsB) {
-		return false
-	} else if cardsA != cardsB {
-		return false
-	}
-
-	return true
+	return cardsA == cardsB
 }
