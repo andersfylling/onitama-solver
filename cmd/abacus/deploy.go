@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"strings"
 
 	"github.com/urfave/cli"
 )
@@ -24,12 +25,29 @@ var cmdDeploy = cli.Command{
 
 		// print the filenames to the terminal, instead of running a sh task from here
 		undeployed := rmDeployedFiles(filenames)
-		for i := range undeployed[:40] {
+		undeployed = rmNonJobFiles(undeployed)
+		var size int
+		if len(undeployed) >= 15 {
+			size = 15
+		} else {
+			size = len(undeployed)
+		}
+		for i := range undeployed[:size] {
 			fmt.Println(undeployed[i])
 		}
 
 		return nil
 	},
+}
+
+func rmNonJobFiles(files []string) (jobs []string) {
+	jobs = make([]string, 0, len(files))
+	for i := range files {
+		if strings.Contains(files[i], "onijob.") {
+			jobs = append(jobs, files[i])
+		}
+	}
+	return
 }
 
 func rmDeployedFiles(files []string) (undeployed []string) {

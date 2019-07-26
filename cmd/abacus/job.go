@@ -49,6 +49,8 @@ func createJob(account string, cores, workers, depth int, cards []onitamago.Card
 	workersStr := strconv.FormatInt(int64(workers), 10)
 	depthStr := strconv.FormatInt(int64(depth), 10)
 
+	logFileName := `onilog.` + join(cards, ".", true) + `.log`
+
 	// #SBATCH --ntasks-per-node ` + workersStr + `      # number of workers
 	template := `#! /bin/bash
 #
@@ -57,7 +59,7 @@ func createJob(account string, cores, workers, depth int, cards []onitamago.Card
 #SBATCH --time 5:00:00            # max time (HH:MM:SS)
 
 #onitamago:cards=[` + join(cards, ", ", true) + `]
-./oniabacus -workers=` + workersStr + ` -depth=` + depthStr + ` search -cards="` + join(cards, ",", false) + `" > onilog.` + join(cards, ".", true) + `.log
+./oniabacus -workers=` + workersStr + ` -depth=` + depthStr + ` search -cards="` + join(cards, ",", false) + `" > ` + logFileName + `
 `
 
 	f, err := os.Create("./onijob." + join(cards, ".", true) + ".sh")
