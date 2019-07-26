@@ -11,7 +11,7 @@ import (
 
 var cmdDeploy = cli.Command{
 	Name:  "show-undeployed",
-	Usage: "shows up to 40 undeployed sbatch jobs",
+	Usage: "shows up to 15 undeployed sbatch jobs",
 	Action: func(c *cli.Context) error {
 		files, err := ioutil.ReadDir(".")
 		if err != nil {
@@ -47,14 +47,14 @@ func rmNonJobFiles(files []string) (jobs []string) {
 			jobs = append(jobs, files[i])
 		}
 	}
-	return
+	return jobs
 }
 
 func rmDeployedFiles(files []string) (undeployed []string) {
 	// every onijob.*.sh that has a onilog.*.log are deployed jobs
 	var nrOfFiles int
 	for i := len(files) - 1; i > 0; i-- {
-		if files[i] == "" || len(files[i]) < 15 {
+		if files[i] == "" || len(files[i]) < 10 || strings.Contains(files[i], "onijob.") {
 			continue
 		}
 
